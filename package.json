@@ -1,0 +1,11 @@
+{
+  "name": "astra-gravity-playground",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An interactive particle universe built with Canvas and browser-native JavaScript.",
+  "scripts": {
+    "check": "node --check dist/app.js && node --check dist/physics.js && node scripts/check-assets.js",
+    "test": "node --test tests/physics.test.js"
+  }
+}
