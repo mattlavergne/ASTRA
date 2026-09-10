@@ -1,103 +1,22 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#111613">
-  <meta name="description" content="A small universe you can play with. Launch stars, bend gravity, and connect constellations in ASTRA, an interactive particle playground.">
-  <title>ASTRA | The Gravity Playground</title>
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css">
-</head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#131513"><meta name="description" content="ASTRA Studio. Write beats, play instruments, arrange tracks, and export your music."><title>ASTRA Studio</title><link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./styles.css"></head>
 <body>
-  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M5 19 19 5"/></symbol>
-    <symbol id="i-orbit" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="5" transform="rotate(-35 12 12)"/><circle cx="12" cy="12" r="2"/><circle cx="20" cy="6" r="1.5"/></symbol>
-    <symbol id="i-binary" viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="17" cy="16" r="3"/><path d="M5 18a9 9 0 0 1 9-15M20 6a9 9 0 0 1-9 15"/></symbol>
-    <symbol id="i-vortex" viewBox="0 0 24 24"><path d="M12 12c-2-1-1-4 1-4 4-1 6 4 4 7-3 5-11 3-12-2C3 6 10 1 17 4c6 3 6 11 2 16"/></symbol>
-    <symbol id="i-burst" viewBox="0 0 24 24"><path d="m12 2 1.7 6.3L19 5l-3.3 5.3L22 12l-6.3 1.7L19 19l-5.3-3.3L12 22l-1.7-6.3L5 19l3.3-5.3L2 12l6.3-1.7L5 5l5.3 3.3Z"/></symbol>
-    <symbol id="i-attract" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m3 3 4 4M3 7h4V3m14 0-4 4m4 0h-4V3M3 21l4-4m-4 0h4v4m14 0-4-4m4 0h-4v4"/></symbol>
-    <symbol id="i-repel" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m7 7-4-4m0 4V3h4m10 4 4-4m-4 0h4v4M7 17l-4 4m0-4v4h4m10-4 4 4m-4 0h4v-4"/></symbol>
-    <symbol id="i-launch" viewBox="0 0 24 24"><path d="m3 21 7-7m-4 7 5-5M3 18l5-5m4-2 7-7m-6 0h6v6"/><circle cx="11" cy="13" r="3"/></symbol>
-    <symbol id="i-connect" viewBox="0 0 24 24"><path d="m6 7 11-2-3 13-8-11"/><circle cx="5" cy="6" r="2"/><circle cx="18" cy="4" r="2"/><circle cx="14" cy="19" r="2"/></symbol>
-    <symbol id="i-sound" viewBox="0 0 24 24"><path d="m11 5-6 4H2v6h3l6 4Zm4 3a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
-    <symbol id="i-muted" viewBox="0 0 24 24"><path d="m11 5-6 4H2v6h3l6 4Zm5 4 6 6m0-6-6 6"/></symbol>
-    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 10a9 9 0 1 1 1 8M3 4v6h6"/></symbol>
-    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></symbol>
-    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
-    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8Z"/></symbol>
-    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 19 19 5M5 5h14v14"/></symbol>
-    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4m0 3v.2"/></symbol>
-    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
-  </svg>
-  <header class="masthead">
-    <a class="wordmark" href="./" aria-label="ASTRA home"><svg class="brand-icon"><use href="#i-star"/></svg>ASTRA<span class="brand-period">.</span></a>
-    <div class="edition"><span class="edition-line"></span>AN INTERACTIVE EXPERIMENT<span class="edition-number">/ 001</span></div>
-    <div class="header-actions">
-      <button id="sound-button" class="quiet-button" aria-pressed="false"><svg><use href="#i-muted"/></svg><span>Sound off</span></button>
-      <button id="help-button" class="quiet-button"><svg><use href="#i-help"/></svg><span>How to play</span></button>
-      <a class="source-link" href="https://github.com/mattlavergne/ASTRA" target="_blank" rel="noopener noreferrer">Source<svg><use href="#i-arrow"/></svg></a>
-    </div>
-  </header>
-
-  <main class="workspace">
-    <aside class="control-panel" aria-label="Universe settings">
-      <div class="panel-intro">
-        <p class="eyebrow">A SMALL UNIVERSE, ALL YOURS</p>
-        <h1>The gravity<br>playground<span>.</span></h1>
-        <p class="intro-copy">Launch stars. Bend orbits.<br>See what happens.</p>
-      </div>
-      <section class="preset-section" aria-labelledby="preset-heading">
-        <div class="section-heading"><h2 id="preset-heading">Choose a universe</h2><span>01 / 04</span></div>
-        <div class="preset-list" role="group" aria-label="Universe presets">
-          <button class="preset active" data-preset="orbit" aria-pressed="true"><span class="preset-art"><svg><use href="#i-orbit"/></svg></span><span class="preset-copy"><strong>Orbital</strong><span>A delicate balance</span></span><span class="preset-indicator"></span></button>
-          <button class="preset" data-preset="binary" aria-pressed="false"><span class="preset-art"><svg><use href="#i-binary"/></svg></span><span class="preset-copy"><strong>Binary stars</strong><span>Two centers of gravity</span></span><span class="preset-indicator"></span></button>
-          <button class="preset" data-preset="vortex" aria-pressed="false"><span class="preset-art"><svg><use href="#i-vortex"/></svg></span><span class="preset-copy"><strong>Vortex</strong><span>A slow spiral inward</span></span><span class="preset-indicator"></span></button>
-          <button class="preset" data-preset="supernova" aria-pressed="false"><span class="preset-art"><svg><use href="#i-burst"/></svg></span><span class="preset-copy"><strong>Supernova</strong><span>Start with a bang</span></span><span class="preset-indicator"></span></button>
-        </div>
-      </section>
-      <section class="tuning-section" aria-labelledby="tuning-heading">
-        <div class="section-heading"><h2 id="tuning-heading">Change the rules</h2><span>↗</span></div>
-        <div class="slider-field"><div class="slider-label"><label for="gravity">Gravity</label><output id="gravity-value" for="gravity">1.0×</output></div><input id="gravity" type="range" min="0.2" max="2.5" step="0.1" value="1" style="--fill:34.8%"><div class="range-endpoints"><span>Floaty</span><span>Heavy</span></div></div>
-        <div class="slider-field"><div class="slider-label"><label for="speed">Time speed</label><output id="speed-value" for="speed">1.0×</output></div><input id="speed" type="range" min="0.2" max="2" step="0.1" value="1" style="--fill:44.4%"></div>
-        <div class="slider-field"><div class="slider-label"><label for="particles">Particles</label><output id="particles-value" for="particles">900</output></div><input id="particles" type="range" min="100" max="2000" step="100" value="900" style="--fill:42.1%"></div>
-      </section>
-      <div class="try-note"><svg><use href="#i-star"/></svg><div><span>TRY THIS</span><p id="experiment-tip">Hold near the edge of an orbit. How long can you keep it together?</p></div></div>
-      <div class="panel-footer"><span>Made for a little curiosity.</span><span class="tiny-star">✳</span></div>
-    </aside>
-
-    <section class="universe" id="universe" aria-label="Interactive particle universe">
-      <canvas id="space" tabindex="0" role="application" aria-label="Particle playground. Use number keys 1 through 4 to select a tool, arrow keys to aim, and Enter to use it. Press H for full instructions." aria-describedby="canvas-instructions">Your browser needs Canvas support to run this playground.</canvas>
-      <div class="field-top"><div class="field-title"><span class="live-dot"></span><span id="field-name">ORBITAL FIELD</span><span class="field-divider">/</span><span id="field-state">RUNNING</span></div><button class="icon-button" id="expand-button" aria-label="Enter full screen" title="Full screen"><svg><use href="#i-expand"/></svg></button></div>
-      <div class="coordinate-label">ASTRA OBSERVATORY<span>EST. 2026</span></div>
-      <div class="field-watermark" aria-hidden="true">LET THERE<br>BE PLAY.</div>
-      <div id="canvas-instructions" class="field-prompt"><span class="prompt-pointer"></span><span id="tool-instruction">Press and hold anywhere to pull the stars.</span></div>
-      <div class="tool-area">
-        <div class="tools" role="group" aria-label="Interaction tools">
-          <button class="tool active" data-tool="attract" aria-pressed="true" title="Attract (1)"><svg><use href="#i-attract"/></svg><span>Attract</span><kbd>1</kbd></button>
-          <button class="tool" data-tool="repel" aria-pressed="false" title="Repel (2)"><svg><use href="#i-repel"/></svg><span>Repel</span><kbd>2</kbd></button>
-          <span class="tool-separator"></span>
-          <button class="tool" data-tool="launch" aria-pressed="false" title="Launch (3)"><svg><use href="#i-launch"/></svg><span>Launch</span><kbd>3</kbd></button>
-          <button class="tool" data-tool="connect" aria-pressed="false" title="Constellation (4)"><svg><use href="#i-connect"/></svg><span>Connect</span><kbd>4</kbd></button>
-        </div>
-        <button id="undo-button" class="undo-button" hidden>Undo last star</button>
-      </div>
-      <footer class="field-bottom"><div class="field-stats"><span><span id="particle-count">900</span> PARTICLES</span><span class="stat-separator">·</span><span id="fps">LIVE</span></div><div class="playback"><button id="pause-button" class="playback-button" aria-label="Pause simulation" title="Pause (Space)"><svg><use href="#i-pause"/></svg><span>Pause</span></button><button id="reset-button" class="playback-button" title="Reset universe (R)"><svg><use href="#i-reset"/></svg><span>Reset</span></button></div></footer>
-      <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    </section>
-  </main>
-  <footer class="page-footer"><span>NO DESTINATION. JUST EXPLORATION.</span><span>Built with curiosity <span class="footer-plus">+</span> a bit of physics.</span><span>A MATTHEW LAVERGNE EXPERIMENT <svg><use href="#i-star"/></svg></span></footer>
-
-  <dialog id="help-dialog" aria-labelledby="help-title">
-    <div class="dialog-header"><span class="eyebrow">WELCOME TO YOUR UNIVERSE</span><button id="close-help" class="icon-button" aria-label="Close instructions"><svg><use href="#i-close"/></svg></button></div>
-    <h2 id="help-title">A few ways to play<span>.</span></h2>
-    <p>Pick a universe, choose a tool, and experiment. The particles react to gravity and to you.</p>
-    <div class="help-tools"><div><svg><use href="#i-attract"/></svg><p><strong>Attract</strong>Press and hold to pull particles toward you.</p><kbd>1</kbd></div><div><svg><use href="#i-repel"/></svg><p><strong>Repel</strong>Press and hold to push particles away.</p><kbd>2</kbd></div><div><svg><use href="#i-launch"/></svg><p><strong>Launch</strong>Drag back, then release to fire a cluster in the opposite direction.</p><kbd>3</kbd></div><div><svg><use href="#i-connect"/></svg><p><strong>Connect</strong>Tap to place stars and draw your own constellation.</p><kbd>4</kbd></div></div>
-    <div class="keyboard-help"><strong>Keyboard controls</strong><p>Focus the universe with Tab. Arrow keys move your aim. Enter toggles a gravity tool, launches a cluster, or places a star. Space pauses, R resets, and H opens this guide. Escape releases a gravity tool.</p></div>
-    <p class="physics-note">This is a playful gravity model, not an astronomy simulator. Sound is optional. Reduced-motion preferences start the universe paused.</p>
-    <button class="primary-button" id="start-playing">Let's play<svg><use href="#i-arrow"/></svg></button>
-  </dialog>
-  <noscript><div class="noscript">Enable JavaScript to interact with ASTRA.</div></noscript>
-  <script type="module" src="./app.js"></script>
-</body>
-</html>
+<svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol><symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></symbol><symbol id="i-loop" viewBox="0 0 24 24"><path d="M19 8H6a4 4 0 0 0 0 8h1m-2-5-4-3 4-3m0 11h13a4 4 0 0 0 0-8h-1m2 5 4 3-4 3"/></symbol><symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h12l4 4v14H3V3Zm2 0v6h10V3M7 21v-8h10v8"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h7l2 3h9v11H3Zm0 3V4h7l2 2h7v3"/></symbol><symbol id="i-sliders" viewBox="0 0 24 24"><path d="M6 3v7m0 4v7M12 3v12m0 4v2M18 3v2m0 4v12M3 10h6v4H3Zm6 5h6v4H9Zm6-10h6v4h-6Z"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="m8 4-5 5 5 5M3 9h11a6 6 0 0 1 0 12"/></symbol><symbol id="i-redo" viewBox="0 0 24 24"><path d="m16 4 5 5-5 5m5-5H10a6 6 0 0 0 0 12"/></symbol><symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol><symbol id="i-headphones" viewBox="0 0 24 24"><path d="M3 14v-3a9 9 0 0 1 18 0v3M3 13h4v8H3Zm14 0h4v8h-4Z"/></symbol><symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="18" cy="16" rx="3" ry="2"/></symbol><symbol id="i-keyboard" viewBox="0 0 24 24"><path d="M2 4h20v16H2ZM7 4v16M12 4v16M17 4v16M5 4v9h4V4m6 0v9h4V4"/></symbol><symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 5m0 2v1"/></symbol></svg>
+<header class="app-header"><a href="./" class="brand" aria-label="ASTRA Studio home"><span class="brand-mark"><i></i><i></i><i></i><i></i></span>ASTRA<span class="studio-tag">STUDIO</span></a><div class="project-heading"><input id="project-title" aria-label="Project name" maxlength="80" value="After hours"><span id="save-state">Local session</span></div><div class="header-actions"><button id="undo" class="icon" title="Undo (Ctrl/⌘ Z)" aria-label="Undo"><svg><use href="#i-undo"/></svg></button><button id="redo" class="icon" title="Redo (Ctrl/⌘ Shift Z)" aria-label="Redo"><svg><use href="#i-redo"/></svg></button><span class="divider"></span><button id="open-project" class="subtle"><svg><use href="#i-folder"/></svg><span>Open</span></button><button id="save-project" class="subtle"><svg><use href="#i-save"/></svg><span>Save project</span></button><button id="export" class="primary"><svg><use href="#i-download"/></svg>Export audio</button></div></header>
+<section class="transport" aria-label="Transport"><div class="transport-left"><button id="library-toggle" class="subtle" aria-expanded="true"><svg><use href="#i-headphones"/></svg>Sounds</button><span class="version">WORKSPACE / 02</span></div><div class="transport-core"><button id="stop" class="icon" title="Stop and return to start" aria-label="Stop"><svg><use href="#i-stop"/></svg></button><button id="play" class="play" title="Play (Space)" aria-label="Play"><svg><use href="#i-play"/></svg></button><button id="record" class="record icon" aria-pressed="false" title="Record pads into current pattern" aria-label="Record pads"><span></span></button><div class="time-display"><strong id="position">01 <span>:</span> 01 <span>:</span> 1</strong><small>BAR <span>BEAT</span> STEP</small></div><label class="tempo"><input id="bpm" type="number" min="40" max="240" value="92" aria-label="Tempo in BPM"><span>BPM</span></label><button id="tap" class="tap" title="Tap four times to set tempo">TAP</button><span class="signature">4/4</span><button id="metronome" class="icon metro" aria-pressed="false" title="Metronome" aria-label="Metronome">♩</button><button id="loop" class="icon active" aria-pressed="true" title="Loop playback" aria-label="Loop playback"><svg><use href="#i-loop"/></svg></button></div><div class="transport-right"><canvas id="scope" width="116" height="36" aria-label="Master waveform"></canvas><span id="audio-state">Audio ready</span><button id="help" class="icon" aria-label="Studio guide"><svg><use href="#i-help"/></svg></button></div></section>
+<div class="studio-layout">
+<aside class="library" id="library"><div class="library-title"><h2>Sound library</h2><span class="count">12</span></div><label class="search"><span>⌕</span><input id="sound-search" placeholder="Find an instrument" aria-label="Find an instrument"></label><p class="section-label">INSTRUMENTS <span>BUILT IN</span></p><div id="instrument-list" class="instrument-list"></div><button id="import-sample" class="import-button"><svg><use href="#i-plus"/></svg><span>Import a sample<small>WAV, MP3, FLAC, AIFF*</small></span></button><p class="library-note">Your audio stays on your device.<br>*Format support varies by browser.</p><div class="library-divider"></div><p class="section-label">SESSION STARTERS</p><div id="demo-list" class="demo-list"></div><button id="new-project" class="subtle new-session"><svg><use href="#i-plus"/></svg>Empty session</button><button id="recover" class="subtle" hidden>Restore previous session</button><div class="library-bottom"><span class="local-symbol">◈</span><div>Made to make music.<small>No account. No subscription.</small></div></div></aside>
+<main class="main-workspace">
+<section class="arranger" aria-labelledby="arranger-title"><div class="panel-heading"><div class="panel-title"><h1 id="arranger-title">Arrangement</h1><span id="song-length">16 bars</span></div><div class="arranger-actions"><div class="segmented" role="group" aria-label="Playback mode"><button id="mode-pattern" class="selected" aria-pressed="true">Pattern</button><button id="mode-song" aria-pressed="false">Song</button></div><button id="add-section" class="small-button"><svg><use href="#i-plus"/></svg>Add section</button></div></div><div class="arrangement-scroll"><div id="arrangement" class="arrangement"></div></div><div class="arrangement-footer"><span>Drag sections to reorder · Double-click to edit</span><span id="duration">00:41</span></div></section>
+<section class="sequencer" aria-labelledby="sequencer-title"><div class="panel-heading seq-heading"><div class="panel-title"><h2 id="sequencer-title">Pattern</h2><div id="pattern-tabs" class="pattern-tabs" role="group" aria-label="Edit pattern"></div></div><div class="seq-actions"><label class="length-select"><select id="pattern-length" aria-label="Pattern length"><option value="16">1 bar</option><option value="32">2 bars</option><option value="64">4 bars</option></select></label><button id="copy-pattern" class="small-button" title="Copy this pattern to another slot">Duplicate</button><label class="swing-control" for="swing">Swing <input id="swing" type="range" min="0" max="65" value="14"><output id="swing-value">14%</output></label></div></div><div class="sequence-scroll"><div class="step-ruler"><span>TRACK / INSTRUMENT</span><div id="ruler"></div></div><div id="track-grid"></div></div><div class="sequencer-footer"><button id="add-track" class="subtle"><svg><use href="#i-plus"/></svg>Add track</button><span class="edit-hint">Click to write · Right-click to edit a hit</span><div id="bar-pages" class="bar-pages"></div><span id="track-count">8 tracks</span></div></section>
+<section class="lower-panel"><div class="panel-heading"><div class="lower-tabs" role="group" aria-label="Editor view"><button id="tab-mixer" class="selected" aria-pressed="true"><svg><use href="#i-sliders"/></svg>Mixer</button><button id="tab-notes" aria-pressed="false"><svg><use href="#i-keyboard"/></svg>Piano roll</button><button id="tab-pads" aria-pressed="false"><svg><use href="#i-music"/></svg>Perform</button></div><span id="lower-caption">Shape your sound</span></div><div id="mixer-view"><div id="mixer" class="mixer"></div></div><div id="notes-view" hidden><div class="piano-toolbar"><strong id="piano-name">Round bass</strong><label>Octave <select id="octave" aria-label="Piano roll lowest octave"><option value="24">C1 – C3</option><option value="36">C2 – C4</option><option value="48">C3 – C5</option><option value="60">C4 – C6</option><option value="72">C5 – C7</option></select></label><label>Note length <select id="note-length"><option value="1">1/16</option><option value="2">1/8</option><option value="4">1/4</option><option value="8">1/2</option><option value="16">1 bar</option></select></label><span>Click to add · Drag to move · Drag note edge to resize</span></div><div class="piano-scroll"><div id="piano" class="piano"></div></div></div><div id="pads-view" hidden><div class="performance-heading"><div><h3>Play it in.</h3><p>Use your keyboard or tap the pads. Arm record to write quantized hits.</p></div><button id="midi" class="small-button">Connect MIDI</button></div><div id="pads" class="pads"></div><div class="performance-footer"><span id="midi-state">Keyboard: A S D F G H J K</span><span>Recording writes to the selected pattern · 1/16 quantize</span></div></div></section>
+<footer class="workspace-footer"><span id="session-status">Ready when you are. Press Space to play.</span><span>ASTRA STUDIO <b>02</b></span></footer>
+</main>
+<aside class="inspector" aria-label="Selected track"><div class="inspector-heading"><p class="section-label">CHANNEL STRIP</p><span id="selected-number">01</span></div><div id="inspector-content"></div></aside>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<dialog id="modal"><div class="modal-header"><h2 id="modal-title"></h2><button id="close-modal" class="icon" aria-label="Close dialog"><svg><use href="#i-close"/></svg></button></div><div id="modal-body"></div></dialog>
+<input id="sample-file" type="file" accept="audio/*,.wav,.mp3,.flac,.aiff,.aif" hidden><input id="project-file" type="file" accept=".astra,.json" hidden>
+<noscript><p class="noscript">Enable JavaScript to use ASTRA Studio.</p></noscript><script type="module" src="./app.js"></script>
+</body></html>
