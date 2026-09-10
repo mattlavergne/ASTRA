@@ -2,16 +2,18 @@ export const VERSION = 2;
 export const COLORS = ['#e9a76e','#e6cd7b','#b9d985','#77c6b4','#78b8d7','#a5a0ed','#d499ce','#df8e94','#a5bec6','#cec098','#95baa0','#9faacc'];
 export const INSTRUMENTS = {kick:'Analog kick',snare:'Snare',hat:'Closed hat',openhat:'Open hat',clap:'Clap',rim:'Rimshot',tom:'Tom',bass:'Sub bass',keys:'Electric keys',lead:'Analog lead',pad:'Soft pad',sample:'Sampler'};
 export const PATTERNS = 'ABCDEFGH'.split('');
+export const SCALE_IDS=['major','minor','dorian','phrygian','lydian','mixolydian'];
+export const NOTE_NAMES=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
 export const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
 export const uid = ()=>globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
 export const melodic = t=>['bass','keys','lead','pad','sample'].includes(t.instrument);
-export const midiName = n=>['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'][n%12]+(Math.floor(n/12)-1);
+export const midiName = n=>NOTE_NAMES[n%12]+(Math.floor(n/12)-1);
 export const hz = n=>440*2**((n-69)/12);
 export const dbGain = d=>d<=-60?0:10**(d/20);
 export function track(instrument,index=0){return {id:uid(),name:INSTRUMENTS[instrument],instrument,color:COLORS[index%COLORS.length],volume:-9,pan:0,mute:false,solo:false,low:0,mid:0,high:0,cutoff:18000,resonance:0.7,reverb:0.08,delay:0,attack:0.005,decay:0.35,release:0.15,tune:0,drive:0,sampleId:null,trimStart:0,trimEnd:1,reverse:false,patterns:Object.fromEntries(PATTERNS.map(p=>[p,[]]))};}
 export function event(step,note=60,velocity=0.8,length=1){return {id:uid(),step,note,velocity,length,chance:1,offset:0,ratchet:1};}
 export function createProject(style='midnight'){
- const p={version:VERSION,title:style==='blank'?'Untitled session':({midnight:'After hours',house:'Concrete rhythm',trap:'Low frequency'}[style]||'After hours'),bpm:style==='house'?124:style==='trap'?142:92,swing:style==='midnight'?0.14:0,master:-3,limiter:true,seed:2718,patternLengths:Object.fromEntries(PATTERNS.map(x=>[x,16])),tracks:['kick','snare','hat','openhat','clap','bass','keys','lead'].map(track),arrangement:['A','A','B','A','C','C','B','D'].map(pattern=>({id:uid(),pattern,repeats:2}))};
+ const p={version:VERSION,title:style==='blank'?'Untitled session':({midnight:'After hours',house:'Concrete rhythm',trap:'Low frequency'}[style]||'After hours'),bpm:style==='house'?124:style==='trap'?142:92,swing:style==='midnight'?0.14:0,master:-3,limiter:true,seed:2718,root:9,scale:'minor',vibe:({midnight:'lofi',house:'house',trap:'trap'}[style]||'lofi'),patternLengths:Object.fromEntries(PATTERNS.map(x=>[x,16])),tracks:['kick','snare','hat','openhat','clap','bass','keys','lead'].map(track),arrangement:['A','A','B','A','C','C','B','D'].map(pattern=>({id:uid(),pattern,repeats:2}))};
  p.tracks.forEach((t,i)=>{t.name=['Deep kick','Dust snare','Closed hat','Open hat','Clap / perc','Round bass','Velvet keys','Glass lead'][i];t.volume=[-6,-12,-18,-21,-20,-11,-16,-20][i];t.pan=[0,0,-0.16,0.22,0.1,0,-0.15,0.2][i];t.reverb=[0,0.13,0.05,0.12,0.16,0,0.32,0.28][i];t.delay=i===7?0.23:0;t.cutoff=i===5?1400:i===6?4200:18000;});
  if(style==='blank'){p.arrangement=[{id:uid(),pattern:'A',repeats:1}];return p;}
  for(const pat of PATTERNS){const k=PATTERNS.indexOf(pat); const rows=style==='house'?[[0,4,8,12],[4,12],[0,2,4,6,8,10,12,14],[2,6,10,14],[4,12]]:style==='trap'?[[0,6,9,14],[8],[0,2,4,6,8,10,12,14,15],[7,15],[8]]:[[0,6,8,11],[4,12],[0,2,4,6,8,10,12,14],[10],[12]];
@@ -39,7 +41,7 @@ export function eventsAt(p,absolute,mode='pattern',pattern='A',only=null){const 
 const num=(v,a,b,f)=>typeof v==='number'&&Number.isFinite(v)?clamp(v,a,b):f;
 export function validateProject(raw){
  if(!raw||raw.version!==VERSION||!Array.isArray(raw.tracks)||raw.tracks.length<1||raw.tracks.length>16)throw new Error('This is not a supported ASTRA Studio project.');
- const p=createProject('blank');p.title=String(raw.title||'Untitled session').slice(0,80);p.bpm=num(raw.bpm,40,240,92);p.swing=num(raw.swing,0,0.65,0);p.master=num(raw.master,-60,6,-3);p.limiter=raw.limiter!==false;p.seed=num(raw.seed,0,2147483647,2718)|0;
+ const p=createProject('blank');p.title=String(raw.title||'Untitled session').slice(0,80);p.bpm=num(raw.bpm,40,240,92);p.swing=num(raw.swing,0,0.65,0);p.master=num(raw.master,-60,6,-3);p.limiter=raw.limiter!==false;p.seed=num(raw.seed,0,2147483647,2718)|0;p.root=Math.round(num(raw.root,0,11,9));p.scale=SCALE_IDS.includes(raw.scale)?raw.scale:'minor';p.vibe=typeof raw.vibe==='string'&&/^[a-z0-9-]{1,24}$/.test(raw.vibe)?raw.vibe:'lofi';
  PATTERNS.forEach(k=>p.patternLengths[k]=[16,32,64].includes(raw.patternLengths?.[k])?raw.patternLengths[k]:16);
  const ids=new Set();p.tracks=raw.tracks.map((r,i)=>{if(!r||!Object.hasOwn(INSTRUMENTS,r.instrument))throw new Error('Project contains an unsupported instrument.');const t=track(r.instrument,i);t.id=typeof r.id==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(r.id)?r.id:uid();if(ids.has(t.id))throw new Error('Duplicate track identifier.');ids.add(t.id);t.name=String(r.name||INSTRUMENTS[t.instrument]).slice(0,40);t.color=/^#[0-9a-f]{6}$/i.test(r.color)?r.color:t.color;
  for(const [k,a,b] of [['volume',-60,6],['pan',-1,1],['low',-18,18],['mid',-18,18],['high',-18,18],['cutoff',40,20000],['resonance',0.1,12],['reverb',0,0.8],['delay',0,0.8],['attack',0.001,2],['decay',0.02,3],['release',0.01,3],['tune',-24,24],['drive',0,1],['trimStart',0,0.999],['trimEnd',0.001,1]])t[k]=num(r[k],a,b,t[k]);
