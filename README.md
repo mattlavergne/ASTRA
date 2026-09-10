@@ -4,6 +4,8 @@ A browser beat production studio. Create patterns, write chords and basslines, p
 
 This replaces the September 9 gravity playground. The opening session, **After hours**, is a complete editable downtempo beat. House and trap sessions and an empty project are also included.
 
+The studio has two faces. **Easy mode** is the default: pick a vibe, press one button, and get a whole arrangement written in a key you chose, then shape it with controls that say what they do. **Pro mode** is the full step sequencer, piano roll, mixer, and channel strip. Both edit the same project, so switching converts nothing and loses nothing.
+
 ## Run
 
 Serve the repository with any static HTTP server. No dependencies, install, API keys, paid services, or build step are required.
@@ -15,6 +17,21 @@ python3 -m http.server 8000 --directory dist
 Open `http://localhost:8000`. Use a server because module scripts and the clock worker require HTTP. The root `index.html` forwards to `dist/`, so the same files work with branch-based GitHub Pages at the repository root.
 
 Press Play to unlock browser audio. Start with the volume low and use headphones when checking your mix.
+
+## Easy mode
+
+Easy mode is for making music without knowing music theory. It writes notes into the same project the pro editors use — there is no separate "beginner file format", and any song made here opens in Pro mode as ordinary patterns, notes, and mixer settings.
+
+1. **Pick a vibe.** Lo-fi chill, boom bap, house, trap, drum & bass, afro groove, pop, or ambient. A vibe sets the tempo, the swing, the drum feel, and a starting mix. Picking one writes a fresh arrangement.
+2. **Set the feeling.** Key is the note everything comes home to; mood picks the scale behind it — bright (major), dreamy (lydian), warm (mixolydian), chill (dorian), sad (minor), or dark (phrygian). Changing either one afterwards *moves the music you already wrote* into the new key instead of discarding it: every note keeps its position in the scale.
+3. **Shape your parts.** Drums, bass, chords, and melody each get one card. "How busy" rewrites that part with more or fewer notes. "New idea" rerolls it. The other sliders are the sound itself — loudness, brightness, punch, space, shape — each one driving several real mixer parameters at once (brightness is filter cutoff plus high shelf; punch is attack, drive, and decay; space is reverb and delay sends).
+4. **Edit the notes.** Drums are one bar of squares, left to right, with the beats numbered. Bass, chords, and melody use a grid whose rows are only the notes in your key, so every square you can click is in tune. Long notes show their tail, and adding a note plays it.
+5. **Build a song.** Sections are named — Main groove, Lift, Breakdown, Big drop — rather than lettered A–D. Pick a song shape, then reorder, add, or remove sections, and switch playback between the loop and the whole song.
+6. **Finish.** Export audio and Save project work identically in both modes.
+
+Nothing is random for its own sake. Chords come from progressions built out of the chosen scale, basslines follow the kick and the chord roots, and melodies are one short idea repeated and varied rather than a scatter of notes — which is why two rolls of the same vibe sound like two different tracks instead of the same track twice. Every generated melodic note is in key: that property is asserted over every vibe, scale, root, and energy level in the test suite.
+
+The mode toggle lives in the header and is remembered on the device. Easy mode is the default for a new visitor.
 
 ## Production workflow
 
@@ -87,13 +104,16 @@ This is a self-contained beat studio and a substantial first production workflow
 - Live MIDI playback supports note-on/off and velocity. Pitch bend, sustain pedal, MIDI clock, and controller mapping are not implemented.
 - Browser background throttling and device latency can affect performance. Keep the tab active while recording. The scheduling worker has a main-thread timer fallback when worker creation is unavailable.
 - Stereo rendering, browser audio decoding, MIDI permissions, touch interactions, and visual layout still need real-browser/device verification. They were not exercised by the automated Node checks.
+- Easy mode edits the currently selected section, and its note grid edits the first track of a part — a second keys or pad track is still reached from Pro mode. It has no pad performance, MIDI recording, per-note velocity, or probability editing; those stay in Pro mode.
+- "How busy" is a setting for the generator, not stored project data, so it returns to its default when the page reloads. The notes it wrote are saved normally.
 
 ## Source
 
 | File | Responsibility |
 | --- | --- |
 | `dist/index.html`, `dist/styles.css` | Studio workspace and responsive theme |
-| `dist/app.js` | Editors, transport UI, mixer, performance, file workflows |
+| `dist/app.js` | Editors, transport UI, mixer, performance, easy-mode workspace, file workflows |
+| `dist/easy.js` | Beginner music engine: scales, chord movements, part generators, plain-language macros |
 | `dist/model.js` | Validated project model, musical timing, event selection, history |
 | `dist/audio.js` | Web Audio graph, synthesis, scheduling, offline rendering |
 | `dist/clock.js` | Worker heartbeat for the look-ahead scheduler |
@@ -112,7 +132,9 @@ node scripts/check-assets.js
 node --test tests/studio.test.js
 ```
 
-Fifteen tests check project schema round-trips and malicious input, arrangement boundaries, tempo/swing timing, mute/solo/probability/retrigger selection, undo/redo, actual synthesized drum PCM, 16/24-bit WAV handling, ZIP integrity, embedded project assets, graph routing, sampler trimming, scheduler stall recovery, and offline render parameters.
+Twenty-one tests check project schema round-trips and malicious input, arrangement boundaries, tempo/swing timing, mute/solo/probability/retrigger selection, undo/redo, actual synthesized drum PCM, 16/24-bit WAV handling, ZIP integrity, embedded project assets, graph routing, sampler trimming, scheduler stall recovery, and offline render parameters.
+
+Six of them cover easy mode: drum templates are well formed and the scale tables agree with the project schema; generated parts are in key, inside the loop, and pass validation unchanged; a seed reproduces its music exactly while new seeds do not; the plain-language macros map onto in-range mixer values and read back where they were set; a key or mood change never leaves a note outside the new key and round-trips notes that were already in it; and the note grids and song shapes stay inside the project's limits.
 
 The audio API contract double verifies scheduling and routing calls. It does not render browser effects or prove audible output. No browser, visual, or end-to-end verification is claimed.
 

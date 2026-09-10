@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createProject,track,event,validateProject,History,locateStep,arrangementSteps,stepSeconds,stepTime,eventsAt,audibleTracks,PATTERNS} from '../dist/model.js';
+import {createProject,track,event,validateProject,History,locateStep,arrangementSteps,stepSeconds,stepTime,eventsAt,audibleTracks,PATTERNS,SCALE_IDS} from '../dist/model.js';
 import {drumPCM,AudioGraph,Transport,renderAudio} from '../dist/audio.js';
 import {encodeWav,crc32,zip,packProject,unpackProject} from '../dist/files.js';
+import * as easy from '../dist/easy.js';
 
 const buffer=(channels,rate=48000)=>({numberOfChannels:channels.length,length:channels[0].length,sampleRate:rate,getChannelData:i=>Float32Array.from(channels[i])});
 
@@ -41,3 +42,131 @@ test('sampler applies original-pitch playback, trim offsets and reversed trim ma
 test('transport schedules beyond UI timer ticks, repeats on the grid, and does not burst after a stall',async()=>{const p=createProject('blank');p.tracks[0].patterns.A=[event(0),event(4),event(8),event(12)];const ctx=new Context();let steps=[];const t=new Transport(()=>p,()=>new Map(),e=>steps.push(e));t.ctx=ctx;await t.start();clearInterval(t.timer);t.timer=null;assert.ok(t.graph.voices.size>0);for(let i=0;i<110;i++){ctx.currentTime=i*.025;t.tick();t.consume();}assert.ok(t.cycle>=1);assert.ok(steps.some(e=>e.absolute===15));const starts=ctx.starts.filter(s=>s.kind==='buffer-source');for(let i=1;i<starts.length;i++)assert.ok(Math.abs((starts[i].time-starts[i-1].time)-60/p.bpm)<1e-8);ctx.currentTime=120;t.tick();assert.ok(t.next<128);t.stop();assert.equal(t.playing,false);assert.equal(t.queue.length,0);});
 
 test('offline exporter requests correct duration and excludes metronome',async()=>{let ctx;const Original=globalThis.OfflineAudioContext;globalThis.OfflineAudioContext=class extends Context{constructor(...args){super(...args);ctx=this;}};try{const p=createProject('blank');p.tracks[0].patterns.A=[event(0)];const result=await renderAudio(p,new Map(),{mode:'pattern',sampleRate:44100,tail:2});assert.equal(result.length,Math.ceil((16*stepSeconds(p)+2)*44100));assert.equal(ctx.starts.length,1);assert.equal(ctx.starts[0].time,0);assert.equal(ctx.starts[0].kind,'buffer-source');}finally{globalThis.OfflineAudioContext=Original;}});
+
+// ── Easy mode ────────────────────────────────────────────────────────────────
+const SCALE_NAMES=['major','minor','dorian','phrygian','lydian','mixolydian'];
+
+test('vibe drum templates are well formed and the scale table matches the project schema',()=>{
+ assert.deepEqual(Object.keys(easy.SCALES).sort(),[...SCALE_IDS].sort());
+ for(const id of SCALE_IDS)assert.equal(easy.SCALES[id].length,7,id);
+ assert.equal(new Set(easy.VIBES.map(v=>v.id)).size,easy.VIBES.length);
+ for(const vibe of easy.VIBES){
+  assert.ok(vibe.bpm>=40&&vibe.bpm<=240,vibe.id);
+  assert.ok(vibe.swing>=0&&vibe.swing<=.65,vibe.id);
+  assert.deepEqual(Object.keys(vibe.drums),['kick','snare','hat','openhat','clap','perc'],vibe.id);
+  for(const [role,row] of Object.entries(vibe.drums)){
+   assert.equal(row.length,16,`${vibe.id} ${role} must cover one 16-step bar`);
+   assert.match(row,/^[xo+.-]{16}$/,`${vibe.id} ${role}`);
+  }
+  assert.ok(easy.parseRow(vibe.drums.kick).some(w=>w===1),`${vibe.id} needs a downbeat`);
+ }
+ for(const mood of easy.MOODS)assert.ok(SCALE_IDS.includes(mood.scale),mood.id);
+ assert.equal(easy.ROOTS.length,12);
+});
+
+test('generated parts are always in key, inside the loop, and survive project validation',()=>{
+ const project=createProject('blank');
+ project.tracks=['kick','snare','hat','openhat','clap','bass','keys','lead'].map(track);
+ for(const vibe of easy.VIBES)for(let seed=1;seed<=12;seed++){
+  const root=(seed*5)%12,scale=SCALE_NAMES[seed%6],steps=[16,32,64][seed%3];
+  const parts=easy.generateParts({vibe:vibe.id,root,scale,seed,steps,energy:(seed%5)/4});
+  assert.ok(parts.progression.length>=2&&parts.progression.every(d=>Number.isInteger(d)&&d>=0&&d<=6),'chords must stay diatonic');
+  for(const t of project.tracks){
+   const role=easy.roleOf(t.instrument);
+   t.patterns.A=(parts[role]||[]).map(n=>({...n}));
+   for(const n of t.patterns.A){
+    assert.ok(Number.isInteger(n.step)&&n.step>=0&&n.step<steps,`${vibe.id} ${role} step ${n.step}`);
+    assert.ok(n.velocity>0&&n.velocity<=1,`${vibe.id} ${role} velocity`);
+    assert.ok(n.length>0&&n.length<=steps,`${vibe.id} ${role} length`);
+    assert.ok(n.offset>=0&&n.offset<=.49&&n.ratchet>=1&&n.ratchet<=4,`${vibe.id} ${role} feel`);
+    if(['bass','chords','melody'].includes(role)){
+     assert.ok(easy.SCALES[scale].includes(((n.note-root)%12+12)%12),`${vibe.id} ${role} played out of key`);
+     assert.ok(n.note>=24&&n.note<=100,`${vibe.id} ${role} octave ${n.note}`);
+    }
+   }
+  }
+  project.patternLengths.A=steps;
+  const clean=validateProject(JSON.parse(JSON.stringify(project)));
+  // Nothing the generator writes may be clamped, dropped or renumbered by the schema.
+  assert.deepEqual(clean.tracks.map(t=>t.patterns.A.map(n=>[n.step,n.note,n.velocity,n.length,n.offset,n.ratchet])),
+   project.tracks.map(t=>t.patterns.A.map(n=>[n.step,n.note,n.velocity,n.length,n.offset,n.ratchet])),vibe.id);
+ }
+});
+
+test('the same seed always writes the same music and different seeds do not',()=>{
+ const options={vibe:'house',root:2,scale:'dorian',steps:32,energy:.7};
+ const a=easy.generateParts({...options,seed:4242}),b=easy.generateParts({...options,seed:4242});
+ assert.deepEqual(a.kick.map(n=>n.step),b.kick.map(n=>n.step));
+ assert.deepEqual(a.melody.map(n=>[n.step,n.note]),b.melody.map(n=>[n.step,n.note]));
+ let different=0;
+ for(let seed=1;seed<=25;seed++){const other=easy.generateParts({...options,seed});
+  if(JSON.stringify(other.kick.map(n=>n.step))!==JSON.stringify(a.kick.map(n=>n.step))||JSON.stringify(other.melody.map(n=>n.note))!==JSON.stringify(a.melody.map(n=>n.note)))different++;}
+ assert.ok(different>=23,`rolling again should give something new (${different}/25)`);
+ // Busier settings write more, quieter ones write less.
+ const sparse=easy.generateParts({...options,seed:7,energy:.1}),dense=easy.generateParts({...options,seed:7,energy:1});
+ assert.ok(dense.hat.length+dense.kick.length>sparse.hat.length+sparse.kick.length);
+});
+
+test('plain-language macros map onto real mixer values and read back where they were set',()=>{
+ for(const key of Object.keys(easy.MACROS)){
+  const t=track('keys');
+  for(let value=0;value<=100;value+=5){
+   easy.setMacro(t,key,value);
+   assert.ok(Math.abs(easy.readMacro(t,key)-value)<=1,`${key} at ${value}`);
+   for(const [prop,low,high] of [['volume',-60,6],['cutoff',40,20000],['high',-18,18],['reverb',0,.8],['delay',0,.8],['attack',.001,2],['decay',.02,3],['release',.01,3],['drive',0,1]])
+    assert.ok(t[prop]>=low&&t[prop]<=high,`${key} pushed ${prop} out of range: ${t[prop]}`);
+  }
+  assert.equal(typeof easy.macroWord(key,50),'string');
+ }
+ const quiet=track('kick'),loud=track('kick');
+ easy.setMacro(quiet,'loudness',10);easy.setMacro(loud,'loudness',90);
+ assert.ok(loud.volume>quiet.volume);
+ const dark=track('pad'),bright=track('pad');
+ easy.setMacro(dark,'brightness',5);easy.setMacro(bright,'brightness',95);
+ assert.ok(bright.cutoff>dark.cutoff*4);
+ assert.equal(easy.groupMacro([quiet,loud],'loudness'),50);
+});
+
+test('changing key or mood moves existing notes without letting one fall out of the new key',()=>{
+ for(const fromScale of SCALE_NAMES)for(const toScale of SCALE_NAMES)for(const fromRoot of [0,4,9])for(const toRoot of [1,7,11]){
+  for(let note=24;note<=96;note++){
+   const moved=easy.retuneNote(note,fromRoot,fromScale,toRoot,toScale);
+   assert.ok(easy.SCALES[toScale].includes(((moved-toRoot)%12+12)%12),`${note} ${fromScale}->${toScale}`);
+   assert.ok(Math.abs(moved-note)<=12,`${note} jumped to ${moved}`);
+  }
+ }
+ // A minor triad keeps its shape when it becomes C major: root, third, fifth.
+ assert.deepEqual([57,60,64].map(n=>easy.retuneNote(n,9,'minor',0,'major')),[48,52,55]);
+ // A note already in the old key round-trips exactly; one that is not snaps into the key and stays there.
+ for(let note=36;note<=84;note++)if(easy.SCALES.minor.includes(((note-9)%12+12)%12))
+  assert.equal(easy.retuneNote(easy.retuneNote(note,9,'minor',2,'lydian'),2,'lydian',9,'minor'),note);
+ const snapped=easy.retuneNote(37,9,'minor',9,'minor');
+ assert.ok(easy.SCALES.minor.includes(((snapped-9)%12+12)%12));
+});
+
+test('easy-mode note grids only offer pitches that are in key, and song shapes stay inside the project limits',()=>{
+ for(const scale of SCALE_NAMES)for(const root of [0,6,11])for(const group of ['bass','chords','melody']){
+  const ladder=easy.scaleLadder(root,scale,group);
+  assert.ok(ladder.length>=12&&ladder.length<=20,`${group} ${ladder.length} rows`);
+  assert.deepEqual(ladder,[...ladder].sort((a,b)=>b-a),'the grid reads high note first');
+  for(const pitch of ladder){
+   assert.ok(easy.SCALES[scale].includes(((pitch-root)%12+12)%12),`${group} offered an out-of-key row`);
+   assert.ok(pitch>=12&&pitch<=108);
+  }
+ }
+ const project=createProject('blank');
+ for(const shape of easy.SONG_SHAPES){
+  assert.ok(shape.plan.length>=1&&shape.plan.length<=64,shape.id);
+  for(const [letter,repeats] of shape.plan){
+   assert.ok(PATTERNS.includes(letter)&&Number.isInteger(repeats)&&repeats>=1&&repeats<=8,shape.id);
+   assert.equal(typeof easy.sectionName(letter),'string');
+  }
+  for(const steps of [16,32,64]){
+   project.patternLengths=Object.fromEntries(PATTERNS.map(p=>[p,steps]));
+   project.arrangement=shape.plan.map(([pattern,repeats])=>({id:'x',pattern,repeats}));
+   assert.ok(arrangementSteps(project)<=2048,`${shape.id} at ${steps} steps exceeds 128 bars`);
+   assert.doesNotThrow(()=>validateProject(JSON.parse(JSON.stringify(project))));
+  }
+ }
+ assert.equal(typeof easy.coachTip(createProject(),{easyStep:0}),'string');
+});

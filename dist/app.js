@@ -1,5 +1,6 @@
 import {PATTERNS,INSTRUMENTS,COLORS,createProject,track,event,uid,melodic,midiName,clamp,History,arrangementSteps,stepSeconds,validateProject,audibleTracks,stepTime} from './model.js';
 import {Transport,renderAudio,drumPCM} from './audio.js';
+import {VIBES,MOODS,ROOTS,GROUPS,MACROS,SECTIONS,SONG_SHAPES,vibeById,groupOf,roleOf,scaleOfMood,moodOfScale,keyName,applyVibeMix,setMacro,groupMacro,describeMacro,macroWord,scaleLadder,coachTip,generateDrums,generateBass,generateChords,generateMelody,generateMotif,progressionFor,retuneNote,randomSeed,rng,sectionName} from './easy.js';
 import {download,encodeWav,zip,safeName,packProject,unpackProject,saveLocal,loadLocal} from './files.js';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=n=>`<svg aria-hidden="true"><use href="#i-${n}"/></svg>`;
@@ -30,9 +31,9 @@ function renderInspector(){const t=current();$('#selected-number').textContent=S
 function drawInstrument(){const canvas=$('#sound-wave');if(!canvas)return;const t=current(),ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.strokeStyle='#303e25';ctx.beginPath();ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke();let data;if(t.instrument==='sample')data=samples.get(t.sampleId)?.buffer.getChannelData(0);else if(!melodic(t))data=drumPCM(t.instrument,8000,t.tune);else data=Float32Array.from({length:1000},(_,i)=>Math.sin(i*0.14)*Math.exp(-i/450)*0.6+Math.sin(i*0.28)*Math.exp(-i/150)*0.2);if(!data)return;ctx.strokeStyle=t.color;ctx.lineWidth=1;ctx.beginPath();for(let x=0;x<w;x++){const start=Math.floor(x/w*data.length),end=Math.max(start+1,Math.floor((x+1)/w*data.length));let peak=0;for(let i=start;i<end;i++)peak=Math.max(peak,Math.abs(data[i]));ctx.moveTo(x,h/2-peak*h*.42);ctx.lineTo(x,h/2+peak*h*.42);}ctx.stroke();if(t.instrument==='sample'){ctx.fillStyle='#0c120bbb';ctx.fillRect(0,0,w*t.trimStart,h);ctx.fillRect(w*t.trimEnd,0,w*(1-t.trimEnd),h);}}
 function renderPiano(){const t=current();$('#piano-name').textContent=t.name;$('#octave').value=octave;const notes=t.patterns[pattern].filter(n=>n.step<page*16+16&&n.step+n.length>page*16);$('#piano').innerHTML=Array.from({length:25},(_,i)=>{const pitch=octave+24-i,black=[1,3,6,8,10].includes(pitch%12);return `<div class="piano-row ${black?'black':''}" data-pitch="${pitch}"><button class="piano-key" data-key="${pitch}" aria-label="Play ${midiName(pitch)}">${midiName(pitch)}</button><div class="piano-cells" style="--track:${t.color}">${Array.from({length:16},(_,s)=>`<button class="piano-cell" data-piano-step="${s+page*16}" data-piano-pitch="${pitch}" aria-label="Add ${midiName(pitch)} at step ${s+page*16+1}"></button>`).join('')}${notes.filter(n=>n.note===pitch).map(n=>{const left=Math.max(0,n.step-page*16),width=Math.min(16,n.step-page*16+n.length)-left;return `<button class="piano-note" data-note="${n.id}" style="left:${left/16*100}%;width:calc(${width/16*100}% - 2px);opacity:${0.55+n.velocity*0.45}" aria-label="${midiName(n.note)}, step ${n.step+1}, ${n.length} steps long" title="${midiName(n.note)} • double-click to edit"><span>${midiName(n.note)}</span><span class="resize-handle" aria-hidden="true"></span></button>`;}).join('')}</div></div>`;}).join('');}
 function renderPads(){$('#pads').innerHTML=project.tracks.map((t,i)=>`<button class="pad" style="--track:${t.color}" data-pad="${t.id}" aria-label="Play ${esc(t.name)}"><kbd>${'ASDFGHJK'[i]||i+1}</kbd><strong>${esc(t.name)}</strong></button>`).join('');}
-function render(){if(!project.tracks.some(t=>t.id===selected))selected=project.tracks[0].id;$('#project-title').value=project.title;$('#bpm').value=project.bpm;$('#swing').value=Math.round(project.swing*100);$('#swing-value').value=`${Math.round(project.swing*100)}%`;renderArrangement();renderGrid();renderMixer();renderInspector();renderPiano();renderPads();updateHistory();updateTransport();}
+function render(){if(!project.tracks.some(t=>t.id===selected))selected=project.tracks[0].id;$('#project-title').value=project.title;$('#bpm').value=project.bpm;$('#swing').value=Math.round(project.swing*100);$('#swing-value').value=`${Math.round(project.swing*100)}%`;renderArrangement();renderGrid();renderMixer();renderInspector();renderPiano();renderPads();renderEasy();updateHistory();updateTransport();}
 function chooseTrack(id){selected=id;const t=current();if(['bass','keys','lead','pad'].includes(t.instrument))octave=t.instrument==='bass'?24:t.instrument==='lead'?60:48;renderGrid();renderMixer();renderInspector();renderPiano();}
-function choosePattern(p){if(pattern===p)return;pattern=p;page=0;transport.pattern=p;if(transport.playing&&transport.mode==='pattern')restart();renderArrangement();renderGrid();renderPiano();}
+function choosePattern(p){if(pattern===p)return;pattern=p;page=0;transport.pattern=p;if(transport.playing&&transport.mode==='pattern')restart();renderArrangement();renderGrid();renderPiano();renderEasy();}
 function showView(next){view=next;for(const v of ['mixer','notes','pads']){$(`#${v}-view`).hidden=v!==next;$(`#tab-${v}`).classList.toggle('selected',v===next);$(`#tab-${v}`).setAttribute('aria-pressed',v===next);}$('#lower-caption').textContent=next==='mixer'?'Shape your sound':next==='notes'?'Write notes, chords, and basslines':'Keyboard and MIDI performance';if(next==='notes')renderPiano();}
 function clearPlayhead(){$$('.playhead,.clip.playing').forEach(n=>n.classList.remove('playhead','playing'));lastStep=-1;$('#position').innerHTML='01 <span>:</span> 01 <span>:</span> 1';}
 function paintPlayhead(e){$$('.step.playhead').forEach(n=>n.classList.remove('playhead'));if(e.pattern===pattern)$$(`[data-step="${e.step}"]`).forEach(n=>n.classList.add('playhead'));$$('.clip.playing').forEach(n=>n.classList.remove('playing'));if(e.clip>=0)$(`[data-clip="${e.clip}"]`)?.classList.add('playing');$('#position').innerHTML=`${String(Math.floor(e.absolute/16)+1).padStart(2,'0')} <span>:</span> ${String(Math.floor(e.absolute%16/4)+1).padStart(2,'0')} <span>:</span> ${e.absolute%4+1}`;}
@@ -49,7 +50,7 @@ function addTrackDialog(){modal('Add an instrument',`<div class="instrument-list
 function editNote(t,n){modal(`${midiName(n.note)} · step ${n.step+1}`,`<div class="note-editor-grid"><label class="modal-field">Pitch (MIDI)<input id="edit-pitch" type="number" min="12" max="108" value="${n.note}"></label><label class="modal-field">Length (steps)<input id="edit-length" type="number" min="0.25" max="${project.patternLengths[pattern]}" step="0.25" value="${n.length}"></label><label class="modal-field">Velocity (%)<input id="edit-velocity" type="number" min="1" max="100" value="${Math.round(n.velocity*100)}"></label><label class="modal-field">Probability (%)<input id="edit-chance" type="number" min="0" max="100" value="${Math.round(n.chance*100)}"></label><label class="modal-field">Delay (% of a step)<input id="edit-offset" type="number" min="0" max="49" value="${Math.round(n.offset*100)}"></label><label class="modal-field">Retriggers per step<select id="edit-ratchet">${[1,2,3,4].map(i=>`<option ${i===n.ratchet?'selected':''}>${i}</option>`).join('')}</select></label></div><div class="modal-actions"><button class="danger" id="delete-note">Delete note</button><button class="primary" id="apply-note">Apply</button></div>`);$('#delete-note').onclick=()=>{commit(()=>{t.patterns[pattern]=t.patterns[pattern].filter(e=>e.id!==n.id);});closeModal();};$('#apply-note').onclick=()=>{const read=(id,min,max,f)=>{const v=Number($(id).value);return Number.isFinite(v)?clamp(v,min,max):f;};commit(()=>{n.note=Math.round(read('#edit-pitch',12,108,n.note));n.length=read('#edit-length',0.25,project.patternLengths[pattern],n.length);n.velocity=read('#edit-velocity',1,100,80)/100;n.chance=read('#edit-chance',0,100,100)/100;n.offset=read('#edit-offset',0,49,0)/100;n.ratchet=read('#edit-ratchet',1,4,1);});closeModal();};}
 function editClip(i){const c=project.arrangement[i];modal(`Section ${i+1}`,`<div class="modal-grid"><label class="modal-field">Pattern<select id="clip-pattern">${PATTERNS.map(p=>`<option ${p===c.pattern?'selected':''}>${p}</option>`).join('')}</select></label><label class="modal-field">Repeats<input id="clip-repeats" type="number" min="1" max="8" value="${c.repeats}"></label></div><p class="modal-note">Each repetition plays the complete pattern. Move a section using the buttons below or drag it in the arrangement.</p><div class="modal-actions"><button id="clip-left" class="small-button" ${i===0?'disabled':''}>Move left</button><button id="clip-right" class="small-button" ${i===project.arrangement.length-1?'disabled':''}>Move right</button><button id="clip-delete" class="danger" ${project.arrangement.length===1?'disabled':''}>Delete</button><button id="clip-apply" class="primary">Apply</button></div>`);for(const [id,delta]of [['#clip-left',-1],['#clip-right',1]])$(id).onclick=()=>{commit(()=>{[project.arrangement[i],project.arrangement[i+delta]]=[project.arrangement[i+delta],project.arrangement[i]];},{stop:true});closeModal();};$('#clip-delete').onclick=()=>{commit(()=>project.arrangement.splice(i,1),{stop:true});closeModal();};$('#clip-apply').onclick=()=>{const repeats=clamp(Math.round(Number($('#clip-repeats').value)||1),1,8),p=$('#clip-pattern').value;const next=arrangementSteps(project)-project.patternLengths[c.pattern]*c.repeats+project.patternLengths[p]*repeats;if(next>2048){toast('The arrangement is limited to 128 bars.');return;}commit(()=>{c.pattern=p;c.repeats=repeats;},{stop:true});closeModal();};}
 // Delegated controls keep the audio engine independent of rendering.
-document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const d=b.dataset;if(d.select)chooseTrack(d.select);if(d.preview)audition(d.preview);if(d.mute||d.solo){const id=d.mute||d.solo,t=project.tracks.find(t=>t.id===id),key=d.mute?'mute':'solo';commit(()=>t[key]=!t[key]);}if(d.pattern)choosePattern(d.pattern);if(d.page!==undefined){page=Number(d.page);renderGrid();renderPiano();}if(d.instrument)addTrack(d.instrument);if(d.demo)confirmAction('Open a starter session?', 'This replaces the current session. Download your project first if you want to keep a separate copy.',()=>replaceSession(createProject(d.demo)), 'Open session');if(d.pad&&e.detail===0)hit(d.pad);if(d.key)hit(selected,Number(d.key));if(d.clip!==undefined)choosePattern(project.arrangement[Number(d.clip)].pattern);});
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const d=b.dataset;if(d.select)chooseTrack(d.select);if(d.preview)audition(d.preview);if(d.mute||d.solo){const id=d.mute||d.solo,t=project.tracks.find(t=>t.id===id),key=d.mute?'mute':'solo';commit(()=>t[key]=!t[key]);}if(d.pattern)choosePattern(d.pattern);if(d.page!==undefined){page=Number(d.page);renderGrid();renderPiano();renderEasy();}if(d.instrument)addTrack(d.instrument);if(d.demo)confirmAction('Open a starter session?', 'This replaces the current session. Download your project first if you want to keep a separate copy.',()=>replaceSession(createProject(d.demo)), 'Open session');if(d.pad&&e.detail===0)hit(d.pad);if(d.key)hit(selected,Number(d.key));if(d.clip!==undefined)choosePattern(project.arrangement[Number(d.clip)].pattern);});
 function applyStep(button,value){const t=project.tracks.find(t=>t.id===button.dataset.track),step=Number(button.dataset.step);if(!t)return;if(value){if(t.patterns[pattern].some(n=>n.step===step)||t.patterns[pattern].length>=512)return;t.patterns[pattern].push(event(step,t.instrument==='bass'?33:60,0.8,melodic(t)?Number($('#note-length').value):1));}else t.patterns[pattern]=t.patterns[pattern].filter(n=>n.step!==step);button.classList.toggle('on',value);button.setAttribute('aria-pressed',value);button.innerHTML=value?'<span class="velocity" style="height:80%"></span><span class="note-dots"><i></i></span>':'';}
 $('#track-grid').addEventListener('pointerdown',e=>{const b=e.target.closest('[data-step]');if(!b||e.button!==0)return;e.preventDefault();if(e.shiftKey){const t=project.tracks.find(t=>t.id===b.dataset.track),n=t.patterns[pattern].find(n=>n.step===Number(b.dataset.step));if(n)editNote(t,n);return;}snapshot();paint={value:!b.classList.contains('on'),seen:new Set()};applyStep(b,paint.value);paint.seen.add(b.dataset.track+':'+b.dataset.step);b.focus({preventScroll:true});});
 document.addEventListener('pointermove',e=>{if(!paint)return;const b=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-step]');if(!b)return;const id=b.dataset.track+':'+b.dataset.step;if(!paint.seen.has(id)){paint.seen.add(id);applyStep(b,paint.value);}});
@@ -83,7 +84,7 @@ $('#piano').addEventListener('dblclick',e=>{const b=e.target.closest('[data-note
 let noteDrag=null;$('#piano').addEventListener('pointerdown',e=>{const b=e.target.closest('[data-note]');if(!b||e.button!==0)return;const n=current().patterns[pattern].find(n=>n.id===b.dataset.note),rect=b.parentElement.getBoundingClientRect();noteDrag={id:n.id,x:e.clientX,y:e.clientY,step:n.step,pitch:n.note,length:n.length,width:rect.width/16,resize:e.target.classList.contains('resize-handle'),changed:false};b.setPointerCapture(e.pointerId);});
 $('#piano').addEventListener('pointermove',e=>{if(!noteDrag)return;const d=noteDrag,n=current().patterns[pattern].find(n=>n.id===d.id);if(!n)return;const ds=Math.round((e.clientX-d.x)/d.width),dn=Math.round((d.y-e.clientY)/22);if(!d.changed&&(ds||dn)){snapshot();d.changed=true;}if(!d.changed)return;if(d.resize)n.length=clamp(d.length+ds,0.25,project.patternLengths[pattern]);else{n.step=clamp(d.step+ds,0,project.patternLengths[pattern]-1);n.note=clamp(d.pitch+dn,12,108);}const b=$(`[data-note="${n.id}"]`);if(b){b.style.transform=d.resize?'none':`translate(${(n.step-d.step)*d.width}px,${(d.pitch-n.note)*22}px)`;if(d.resize)b.style.width=`${Math.min(n.length,16-(n.step%16))/16*100}%`;}});
 function endNoteDrag(){if(!noteDrag)return;const changed=noteDrag.changed;noteDrag=null;if(changed){change();renderPiano();renderGrid();renderArrangement();}}document.addEventListener('pointerup',endNoteDrag);document.addEventListener('pointercancel',endNoteDrag);window.addEventListener('blur',endNoteDrag);
-function replaceSession(p,s=new Map()){transport.stop();clearTimeout(saveTimer);project=p;samples=s;pattern='A';page=0;selected=p.tracks[0].id;history.clear();transport.pattern='A';armed=false;change();render();toast('Session loaded. Press Space to play.');}
+function replaceSession(p,s=new Map()){transport.stop();clearTimeout(saveTimer);project=p;samples=s;pattern='A';page=0;selected=p.tracks[0].id;history.clear();transport.pattern='A';armed=false;easyBusy={};easyOpen='drums';easyTouched=true;easyKeyChosen=true;$('#easy-restore').hidden=true;change();render();toast('Session loaded. Press Space to play.');}
 $('#new-project').onclick=()=>confirmAction('Start an empty session?','Download your current project first if you want to keep a separate copy.',()=>replaceSession(createProject('blank')),'Start session');
 $('#import-sample').onclick=()=>{sampleTarget=null;$('#sample-file').click();};
 $('#sample-file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{if(file.size>20*1024*1024)throw new Error('Choose an audio file smaller than 20 MB.');if(!sampleTarget&&project.tracks.length>=16)throw new Error('Select a sampler track to replace its sound, or remove a track.');toast('Decoding your sample…');const ctx=await transport.init(),buffer=await ctx.decodeAudioData(await file.arrayBuffer());if(buffer.duration>120)throw new Error('Samples can be up to two minutes long.');const memory=[...samples.values()].reduce((n,s)=>n+s.buffer.length*s.buffer.numberOfChannels*4,0)+buffer.length*buffer.numberOfChannels*4;if(memory>128*1024*1024)throw new Error('Decoded audio exceeds 128 MB. Use shorter samples, or save and reopen this project to discard unused audio.');const id=uid();samples.set(id,{blob:file,name:file.name,buffer});commit(()=>{let t=project.tracks.find(t=>t.id===sampleTarget);if(!t){t=track('sample',project.tracks.length);project.tracks.push(t);}t.instrument='sample';t.sampleId=id;t.name=file.name.replace(/\.[^.]+$/,'').slice(0,40);t.trimStart=0;t.trimEnd=1;selected=t.id;},{stop:true});toast(`${file.name} loaded. C4 plays its original pitch.`);}catch(err){toast(err.message||'The browser could not decode this audio format. Try PCM WAV.');}};
@@ -111,4 +112,252 @@ let meterFrame=0,peakHold=0;const meterData=new Float32Array(256),scopeData=new 
  else{meterData.fill(0);scopeData.fill(0);$$('[data-meter]').forEach(el=>el.style.height='0%');}const canvas=$('#scope'),ctx=canvas.getContext('2d');ctx.clearRect(0,0,116,36);ctx.strokeStyle='#b8da78';ctx.lineWidth=1;ctx.beginPath();for(let x=0;x<116;x++){const y=18+(scopeData[Math.floor(x/116*scopeData.length)]||0)*16;x?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();}requestAnimationFrame(animate);}
 window.addEventListener('beforeunload',e=>{if(saveFailed||lastSavedRevision<revision){e.preventDefault();e.returnValue='';}});
 window.addEventListener('error',()=>{$('#session-status').textContent='An operation failed. Save your project, then reload if needed.';});
-renderLibrary();render();requestAnimationFrame(animate);loadLocal().then(data=>{if(data?.project){restoreData=data;$('#recover').hidden=false;$('#recover').textContent=`Restore ${String(data.project.title||'previous session').slice(0,30)}`;$('#save-state').textContent='Previous session available in Sounds';}}).catch(()=>{$('#save-state').textContent='Download projects to keep your work';});
+
+// ── Easy mode ────────────────────────────────────────────────────────────────
+// A second face on the same studio. It edits the same project the pro view does,
+// so switching modes never converts or loses anything. What it changes is the
+// vocabulary: vibes instead of templates, "how busy" instead of step probability,
+// "brightness" instead of a filter cutoff, and a note grid that only contains
+// pitches that are in key.
+const EASY_LETTERS=['A','B','C','D'];
+const EASY_LENGTHS={bass:4,chords:8,melody:2,drums:1,extras:1};
+const BUSY_WORDS=['Almost empty','Simple','Steady','Busy','Wild'];
+const PLAIN_NAMES={kick:'Kick',snare:'Snare',hat:'Hi-hat',openhat:'Open hat',clap:'Clap',bass:'Bass',keys:'Chords',lead:'Melody'};
+let easy=true,easyTouched=false,easyKeyChosen=false,easyOpen='drums',easyBusy={};
+try{easy=localStorage.getItem('astra-mode')!=='pro';}catch{}
+const easyTracks=group=>project.tracks.filter(t=>groupOf(t.instrument)===group);
+const easyGroups=()=>GROUPS.filter(g=>easyTracks(g.id).length);
+const busyOf=group=>easyBusy[group]??60;
+const usedLetters=()=>{const set=new Set(project.arrangement.map(c=>c.pattern));set.add(pattern);return PATTERNS.filter(p=>set.has(p));};
+const speedWord=bpm=>bpm<80?'Slow':bpm<100?'Relaxed':bpm<118?'Steady':bpm<140?'Upbeat':'Fast';
+const grooveWord=swing=>swing<.04?'Straight and tight':swing<.14?'Slightly loose':swing<.3?'Swung':'Heavy shuffle';
+const timeLabel=steps=>{const sec=steps*stepSeconds(project);return `${Math.floor(sec/60)}:${String(Math.round(sec%60)).padStart(2,'0')}`;};
+const songProgression=()=>progressionFor(project.scale,rng((project.seed||1)+7));
+const songMotif=(seed=(project.seed||1)+13)=>generateMotif(rng(seed),{energy:.62,style:vibeById(project.vibe).melody});
+
+// One pattern's worth of notes, written straight into the project's tracks by role.
+function fillPattern(letter,{groups=null,seed=randomSeed(),progression=null,motif=null}={}){
+ const vibe=vibeById(project.vibe),steps=project.patternLengths[letter],bars=Math.max(1,Math.round(steps/16));
+ const base=SECTIONS[letter]?.energy??.6,level=g=>clamp(base*(.45+busyOf(g)/100*1.15),.04,1);
+ const shared={steps,root:project.root,scale:project.scale,progression,chordStart:PATTERNS.indexOf(letter)*bars};
+ const drums=offset=>generateDrums(rng(seed+offset),vibe,{steps,energy:level('drums')});
+ const first=drums(0);
+ const make=(role,offset)=>{
+  const kick=(offset?drums(offset*7919):first).kick||[];
+  if(role==='bass')return generateBass(rng(seed+11+offset*7919),vibe,{...shared,energy:level('bass'),kick});
+  if(role==='chords')return generateChords(rng(seed+22+offset*7919),vibe,{...shared,energy:level('chords')});
+  if(role==='melody')return generateMelody(rng(seed+33+offset*7919),vibe,{...shared,energy:level('melody'),motif});
+  return (offset?drums(offset*7919):first)[role]||[];
+ };
+ const seen={};
+ for(const t of project.tracks){
+  const group=groupOf(t.instrument);if(groups&&!groups.includes(group))continue;
+  const role=roleOf(t.instrument),copy=seen[role]=(seen[role]??-1)+1;
+  t.patterns[letter]=make(role,copy).filter(n=>n.step<steps).slice(0,512).map(n=>({...n,id:uid()}));
+ }
+}
+function ensureEasyTracks(){
+ const have=new Set(project.tracks.map(t=>t.instrument));
+ for(const instrument of ['kick','snare','hat','openhat','clap','bass','keys','lead']){
+  if(have.has(instrument)||project.tracks.length>=16)continue;
+  const t=track(instrument,project.tracks.length);t.name=PLAIN_NAMES[instrument]||INSTRUMENTS[instrument];
+  applyVibeMix(t,vibeById(project.vibe));project.tracks.push(t);
+ }
+}
+function easyGenerate({vibe=null,shuffleKey=false,announce=true}={}){
+ easyTouched=true;
+ structuralRestart(()=>commit(()=>{
+  if(vibe){const v=vibeById(vibe);project.vibe=vibe;project.bpm=v.bpm;project.swing=v.swing;if(!easyKeyChosen)project.scale=scaleOfMood(v.mood);}
+  if(shuffleKey){project.root=Math.floor(Math.random()*12);project.scale=scaleOfMood(MOODS[Math.floor(Math.random()*MOODS.length)].id);}
+  project.seed=randomSeed();
+  ensureEasyTracks();
+  if(vibe||shuffleKey)project.tracks.forEach(t=>applyVibeMix(t,vibeById(project.vibe)));
+  const progression=songProgression(),motif=songMotif();
+  EASY_LETTERS.forEach((letter,i)=>fillPattern(letter,{seed:project.seed+i*104729,progression,motif}));
+  if(project.arrangement.length<3)project.arrangement=SONG_SHAPES[1].plan.map(([p,repeats])=>({id:uid(),pattern:p,repeats}));
+ }));
+ if(announce)toast(`${vibeById(project.vibe).name} in ${keyName(project.root,project.scale)}. Press Play. Undo puts back what you had.`);
+}
+function rollGroup(group){
+ easyTouched=true;
+ const fresh=randomSeed();
+ structuralRestart(()=>commit(()=>fillPattern(pattern,{groups:[group],seed:fresh,progression:songProgression(),motif:group==='melody'?songMotif(fresh):songMotif()})));
+ toast(`New ${GROUPS.find(g=>g.id===group)?.name.toLowerCase()||'part'} for ${sectionName(pattern).toLowerCase()}.`);
+}
+function easySetBusy(group,value){easyBusy[group]=clamp(value,0,100);rollGroup(group);}
+function easyToggleGroup(group){const list=easyTracks(group),silence=list.some(t=>!t.mute);commit(()=>list.forEach(t=>t.mute=silence));}
+function easyToggleNote(id,step,pitch){
+ easyTouched=true;
+ const t=project.tracks.find(t=>t.id===id);if(!t)return;
+ const existing=t.patterns[pattern].find(n=>n.step===step&&n.note===pitch);
+ commit(()=>{
+  selected=t.id;
+  if(existing)t.patterns[pattern]=t.patterns[pattern].filter(n=>n!==existing);
+  else if(t.patterns[pattern].length<512)t.patterns[pattern].push(event(step,pitch,.8,EASY_LENGTHS[groupOf(t.instrument)]||2));
+ });
+ if(!existing)audition(t.id,pitch);
+}
+function easySetKey(root,scale){
+ if(root===project.root&&scale===project.scale)return;
+ structuralRestart(()=>commit(()=>{
+  const fromRoot=project.root,fromScale=project.scale;project.root=root;project.scale=scale;
+  for(const t of project.tracks){
+   if(!melodic(t)||t.instrument==='sample')continue;
+   for(const p of PATTERNS)for(const n of t.patterns[p])n.note=clamp(retuneNote(n.note,fromRoot,fromScale,root,scale),12,108);
+  }
+ }));
+ toast(`Moved to ${keyName(root,scale)}. Your notes came with it.`);
+}
+function easySetTempo(bpm){structuralRestart(()=>{snapshot();project.bpm=clamp(Math.round(bpm),40,240);change();render();});}
+function easySetSwing(swing){structuralRestart(()=>{snapshot();project.swing=clamp(swing,0,.65);change();render();});}
+function easySetLoop(steps){
+ if(project.patternLengths[pattern]===steps)return;
+ structuralRestart(()=>commit(()=>{
+  page=0;for(const letter of EASY_LETTERS)project.patternLengths[letter]=steps;
+  const progression=songProgression(),motif=songMotif();
+  EASY_LETTERS.forEach((letter,i)=>fillPattern(letter,{seed:(project.seed||1)+i*104729,progression,motif}));
+ }));
+ toast(`Loops are now ${steps/16} bar${steps>16?'s':''} long.`);
+}
+function easySetPlayMode(mode){
+ structuralRestart(()=>{transport.mode=mode;transport.pattern=pattern;});
+ for(const v of ['pattern','song']){$(`#mode-${v}`).classList.toggle('selected',mode===v);$(`#mode-${v}`).setAttribute('aria-pressed',String(mode===v));}
+ renderEasySong();
+}
+function applySongShape(id){
+ const shape=SONG_SHAPES.find(s=>s.id===id)||SONG_SHAPES[1];
+ structuralRestart(()=>commit(()=>project.arrangement=shape.plan.map(([p,repeats])=>({id:uid(),pattern:p,repeats}))));
+ toast(`${shape.name}: ${arrangementSteps(project)/16} bars. Switch Play to "The whole song" to hear it.`);
+}
+function moveSection(i,step){const j=i+step,a=project.arrangement;if(j<0||j>=a.length)return;structuralRestart(()=>commit(()=>{[a[i],a[j]]=[a[j],a[i]];}));}
+function removeSection(i){
+ if(project.arrangement.length<=1){toast('A song needs at least one section.');return;}
+ structuralRestart(()=>commit(()=>project.arrangement.splice(i,1)));
+}
+function addSection(letter){
+ if(project.arrangement.length>=64||arrangementSteps(project)+project.patternLengths[letter]*2>2048){toast('That is as long as a song can get here.');return;}
+ structuralRestart(()=>commit(()=>project.arrangement.push({id:uid(),pattern:letter,repeats:2})));
+}
+function setMode(mode,announce=true){
+ easy=mode==='easy';
+ try{localStorage.setItem('astra-mode',easy?'easy':'pro');}catch{}
+ document.body.classList.toggle('easy-mode',easy);
+ $('#easy-view').hidden=!easy;
+ for(const m of ['easy','pro']){const on=easy===(m==='easy');$(`#mode-${m}`).classList.toggle('selected',on);$(`#mode-${m}`).setAttribute('aria-pressed',String(on));}
+ render();
+ if(announce)toast(easy?'Easy mode: plain language, and every note you can click is in key.':'Pro mode: full sequencer, piano roll, mixer and channel strip.');
+}
+function renderEasy(){
+ if(!easy)return;
+ renderEasyVibes();renderEasyFeel();renderEasySections();renderEasyParts();renderEasySong();
+ $('#easy-coach').textContent=coachTip(project,{easyStep:easyTouched?1:0});
+}
+function renderEasyVibes(){
+ $('#easy-vibes').innerHTML=VIBES.map(v=>`<button class="vibe ${v.id===project.vibe?'selected':''}" data-vibe="${v.id}" aria-pressed="${v.id===project.vibe}"><strong>${esc(v.name)}</strong><small>${esc(v.blurb)}</small><span>${v.bpm} BPM</span></button>`).join('');
+}
+function renderEasyFeel(){
+ const mood=moodOfScale(project.scale),length=project.patternLengths[pattern];
+ $('#easy-feel').innerHTML=`
+<label class="feel"><span>Key<small>The note everything comes home to.</small></span><select id="easy-key" aria-label="Key">${ROOTS.map(r=>`<option value="${r.pitch}" ${r.pitch===project.root?'selected':''}>${r.name}</option>`).join('')}</select></label>
+<label class="feel"><span>Mood<small>${esc(mood.hint)}</small></span><select id="easy-mood" aria-label="Mood">${MOODS.map(m=>`<option value="${m.id}" ${m.id===mood.id?'selected':''}>${esc(m.name)}</option>`).join('')}</select></label>
+<label class="feel"><span>Speed<small id="easy-speed-word">${speedWord(project.bpm)} · ${Math.round(project.bpm)} BPM</small></span><input id="easy-speed" type="range" min="60" max="180" value="${Math.round(clamp(project.bpm,60,180))}" aria-label="Speed in beats per minute"></label>
+<label class="feel"><span>Groove<small id="easy-groove-word">${grooveWord(project.swing)}</small></span><input id="easy-groove" type="range" min="0" max="60" value="${Math.round(project.swing*100)}" aria-label="How much the beat swings"></label>
+<div class="feel"><span>Loop length<small>How long before it repeats.</small></span><div class="segmented">${[16,32,64].map(n=>`<button data-loop="${n}" class="${length===n?'selected':''}" aria-pressed="${length===n}">${n/16} bar${n>16?'s':''}</button>`).join('')}</div></div>`;
+}
+function renderEasySections(){
+ const pages=project.patternLengths[pattern]/16;
+ $('#easy-sections').innerHTML=`<span class="easy-label">Editing</span>${usedLetters().map(p=>`<button data-pattern="${p}" class="chip ${p===pattern?'selected':''}" aria-pressed="${p===pattern}">${esc(sectionName(p))}</button>`).join('')}`+
+ (pages>1?`<span class="easy-label bar-label">Bar</span>${Array.from({length:pages},(_,i)=>`<button data-page="${i}" class="chip ${i===page?'selected':''}" aria-pressed="${i===page}">${i+1}</button>`).join('')}`:'');
+}
+function easyStepCells(t){
+ const notes=t.patterns[pattern];
+ return Array.from({length:16},(_,i)=>{
+  const step=page*16+i,n=notes.find(n=>n.step===step);
+  return `<button class="step ${n?'on':''}" data-track="${t.id}" data-step="${step}" aria-pressed="${!!n}" aria-label="${esc(t.name)} beat ${i+1}">${n?`<span class="velocity" style="height:${Math.round(n.velocity*100)}%"></span><span class="note-dots"><i></i></span>`:''}</button>`;
+ }).join('');
+}
+function easyNoteLane(group,t){
+ const ladder=scaleLadder(project.root,project.scale,group),notes=t.patterns[pattern];
+ return `<p class="lane-hint">${esc(t.name)} · every row is a note from ${esc(keyName(project.root,project.scale))}, so anything you click fits.</p>
+<div class="note-grid">${ladder.map(pitch=>{
+ const cells=Array.from({length:16},(_,i)=>{
+  const step=page*16+i,hit=notes.find(n=>n.step===step&&n.note===pitch),held=!hit&&notes.some(n=>n.note===pitch&&n.step<step&&n.step+n.length>step);
+  return `<button class="note-cell ${hit?'on':held?'held':''}" data-note-track="${t.id}" data-note-step="${step}" data-note-pitch="${pitch}" aria-pressed="${!!hit}" aria-label="${midiName(pitch)} at beat ${i+1}"></button>`;
+ }).join('');
+ return `<div class="note-row" style="--track:${t.color}"><span class="note-name">${midiName(pitch)}</span>${cells}</div>`;
+}).join('')}</div>`;
+}
+function renderEasyParts(){
+ const groups=easyGroups();
+ $('#easy-parts').innerHTML=groups.map(g=>{
+  const list=easyTracks(g.id),live=list.some(t=>!t.mute),hits=list.reduce((n,t)=>n+t.patterns[pattern].length,0),open=easyOpen===g.id;
+  const macros=g.macros.map(key=>{const value=groupMacro(list,key);
+   return `<label class="macro"><span>${MACROS[key].name}<output data-macro-out="${g.id}:${key}">${esc(macroWord(key,value))}</output></span><input type="range" min="0" max="100" value="${value}" data-macro="${key}" data-group="${g.id}" aria-label="${esc(describeMacro(key,value))} for ${esc(g.name)}"></label>`;}).join('');
+  const lane=!open?'':g.lane==='steps'
+   ?`<p class="lane-hint">Click a square to add or remove a hit. Left to right is one bar of time.</p><div class="lane-row lane-ruler"><span></span><div class="lane-steps">${Array.from({length:16},(_,i)=>`<span>${i%4?'':i/4+1}</span>`).join('')}</div></div>${list.map(t=>`<div class="lane-row" style="--track:${t.color}"><button class="lane-name" data-select="${t.id}">${esc(t.name)}</button><div class="lane-steps">${easyStepCells(t)}</div></div>`).join('')}`
+   :easyNoteLane(g.id,list[0]);
+  return `<article class="part ${live?'':'off'}" data-part="${g.id}" style="--track:${list[0].color}">
+<div class="part-head"><div class="part-title"><h3>${esc(g.name)}</h3><p>${esc(g.blurb)}</p></div>
+<div class="part-buttons"><span class="part-count" data-part-count="${g.id}">${hits} hit${hits===1?'':'s'}</span><button class="small-button" data-group-mute="${g.id}" aria-pressed="${!live}">${live?'Mute':'Unmute'}</button><button class="small-button roll" data-roll="${g.id}">New idea</button></div></div>
+<div class="part-controls"><label class="macro busy"><span>How busy<output>${BUSY_WORDS[clamp(Math.floor(busyOf(g.id)/20.01),0,4)]}</output></span><input type="range" min="5" max="100" value="${busyOf(g.id)}" data-busy="${g.id}" aria-label="How busy ${esc(g.name)} should be"></label>${macros}</div>
+<button class="lane-toggle" data-open="${g.id}" aria-expanded="${open}">${open?'Hide the notes':'Edit the notes'}</button>
+${open?`<div class="lane">${lane}</div>`:''}</article>`;
+ }).join('')+`<button class="part-add" data-import-sound="1">Add your own sound<small>Import a WAV or MP3 and play it like an instrument.</small></button>`;
+}
+function updateEasyCounts(){
+ for(const g of easyGroups()){const hits=easyTracks(g.id).reduce((n,t)=>n+t.patterns[pattern].length,0);const el=$(`[data-part-count="${g.id}"]`);if(el)el.textContent=`${hits} hit${hits===1?'':'s'}`;}
+}
+function renderEasySong(){
+ const steps=arrangementSteps(project);
+ $('#easy-song').innerHTML=`
+<div class="song-modes"><span class="easy-label">Play</span><div class="segmented">${[['pattern','Just this loop'],['song','The whole song']].map(([m,label])=>`<button data-easy-play="${m}" class="${transport.mode===m?'selected':''}" aria-pressed="${transport.mode===m}">${label}</button>`).join('')}</div><span class="song-length">${steps/16} bars · ${timeLabel(steps)}</span></div>
+<div class="song-shapes">${SONG_SHAPES.map(s=>`<button class="shape" data-shape="${s.id}"><strong>${esc(s.name)}</strong><small>${esc(s.blurb)}</small></button>`).join('')}</div>
+<ol class="song-list">${project.arrangement.map((c,i)=>`<li class="song-item" data-pat="${c.pattern}"><button class="song-name" data-pattern="${c.pattern}">${esc(sectionName(c.pattern))}</button><span class="song-bars">${project.patternLengths[c.pattern]/16*c.repeats} bars</span><span class="song-tools"><button data-move="${i}:-1" aria-label="Move ${esc(sectionName(c.pattern))} earlier" title="Move earlier">◀</button><button data-move="${i}:1" aria-label="Move ${esc(sectionName(c.pattern))} later" title="Move later">▶</button><button data-remove="${i}" aria-label="Remove ${esc(sectionName(c.pattern))}" title="Remove">✕</button></span></li>`).join('')}</ol>
+<div class="song-add"><span class="easy-label">Add a section</span>${EASY_LETTERS.map(p=>`<button class="chip" data-add-section="${p}">+ ${esc(SECTIONS[p].short)}</button>`).join('')}</div>`;
+}
+// The pro guide is already wired up; easy mode answers different questions.
+const proGuide=$('#help').onclick;
+$('#help').onclick=()=>easy?modal('Making a beat, start to finish',`<ol class="guide-list"><li><strong>Pick a vibe and press "Make me a beat".</strong> You get a whole arrangement — drums, bass, chords and a melody — written in your key. Press it again for a different one. Undo brings back the last.</li><li><strong>Set the feeling.</strong> Key is the note everything comes home to; mood decides whether it sounds happy, sad or dark. Change either one later and the music you already wrote moves with it, still in tune.</li><li><strong>Shape your parts.</strong> "How busy" rewrites a part with more or fewer notes. The sliders next to it are the sound itself: loudness, brightness, punch, space. "New idea" rerolls just that part.</li><li><strong>Edit the notes if you want.</strong> Drums are squares: one bar, left to right. Bass, chords and melody are a grid where every row is a note from your key — so anything you click fits. Nothing you can click is wrong.</li><li><strong>Build your song.</strong> Sections are named: Main groove, Lift, Breakdown, Big drop. Pick a shape, then reorder or delete sections. Switch Play to "The whole song" to hear it end to end.</li><li><strong>Export.</strong> "Export audio" writes a WAV you can upload anywhere. "Save project" keeps a file you can open again later.</li></ol><div class="guide-keys"><kbd>Space</kbd><span>Play / stop</span><kbd>Ctrl/⌘ Z</kbd><span>Undo (Shift to redo)</span></div><p class="modal-note">Every control here is a shortcut to something real. Switch to <strong>Pro</strong> at any time to see the same song as a step sequencer, piano roll, mixer and channel strip — nothing is converted or lost, and you can switch back.</p>`):proGuide();
+$('#easy-restore').onclick=()=>$('#recover').click();
+$('#mode-easy').onclick=()=>setMode('easy');
+$('#mode-pro').onclick=()=>setMode('pro');
+$('#easy-generate').onclick=()=>easyGenerate();
+$('#easy-surprise').onclick=()=>easyGenerate({vibe:VIBES[Math.floor(Math.random()*VIBES.length)].id,shuffleKey:true});
+$('#easy-view').addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b||b.disabled)return;const d=b.dataset;
+ if(d.vibe&&d.vibe!==project.vibe)easyGenerate({vibe:d.vibe});
+ if(d.loop)easySetLoop(Number(d.loop));
+ if(d.open){easyOpen=easyOpen===d.open?'':d.open;renderEasyParts();}
+ if(d.groupMute)easyToggleGroup(d.groupMute);
+ if(d.roll)rollGroup(d.roll);
+ if(d.step!==undefined&&d.track){easyTouched=true;snapshot();applyStep(b,!b.classList.contains('on'));change();transport.update();updateEasyCounts();}
+ if(d.noteTrack)easyToggleNote(d.noteTrack,Number(d.noteStep),Number(d.notePitch));
+ if(d.shape)applySongShape(d.shape);
+ if(d.move){const [i,step]=d.move.split(':').map(Number);moveSection(i,step);}
+ if(d.remove!==undefined)removeSection(Number(d.remove));
+ if(d.addSection)addSection(d.addSection);
+ if(d.easyPlay)easySetPlayMode(d.easyPlay);
+ if(d.importSound){sampleTarget=null;$('#sample-file').click();}
+});
+$('#easy-view').addEventListener('input',e=>{
+ const el=e.target,d=el.dataset;
+ if(d.macro){
+  if(!gestureChanged){snapshot();gestureChanged=true;}
+  const value=Number(el.value);for(const t of easyTracks(d.group))setMacro(t,d.macro,value);
+  const out=$(`[data-macro-out="${d.group}:${d.macro}"]`);if(out)out.textContent=macroWord(d.macro,value);el.setAttribute('aria-label',`${describeMacro(d.macro,value)} for ${d.group}`);
+  change();transport.update();return;
+ }
+ if(d.busy){const out=el.parentElement.querySelector('output');if(out)out.textContent=BUSY_WORDS[clamp(Math.floor(Number(el.value)/20.01),0,4)];return;}
+ if(el.id==='easy-speed')$('#easy-speed-word').textContent=`${speedWord(Number(el.value))} · ${el.value} BPM`;
+ if(el.id==='easy-groove')$('#easy-groove-word').textContent=grooveWord(Number(el.value)/100);
+});
+$('#easy-view').addEventListener('change',e=>{
+ const el=e.target,d=el.dataset;
+ if(d.macro){gestureChanged=false;renderEasyParts();return;}
+ if(d.busy)return easySetBusy(d.busy,Number(el.value));
+ if(el.id==='easy-key'){easyKeyChosen=true;return easySetKey(Number(el.value),project.scale);}
+ if(el.id==='easy-mood'){easyKeyChosen=true;return easySetKey(project.root,scaleOfMood(el.value));}
+ if(el.id==='easy-speed')return easySetTempo(Number(el.value));
+ if(el.id==='easy-groove')return easySetSwing(Number(el.value)/100);
+});
+renderLibrary();setMode(easy?'easy':'pro',false);requestAnimationFrame(animate);loadLocal().then(data=>{if(data?.project){restoreData=data;const label=`Restore ${String(data.project.title||'previous session').slice(0,30)}`;$('#recover').hidden=false;$('#recover').textContent=label;$('#easy-restore').hidden=false;$('#easy-restore').textContent=label;$('#save-state').textContent='Previous session can be restored';}}).catch(()=>{$('#save-state').textContent='Download projects to keep your work';});
