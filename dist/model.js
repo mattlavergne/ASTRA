@@ -1,12 +1,14 @@
 export const VERSION = 2;
 export const COLORS = ['#e9a76e','#e6cd7b','#b9d985','#77c6b4','#78b8d7','#a5a0ed','#d499ce','#df8e94','#a5bec6','#cec098','#95baa0','#9faacc'];
-export const INSTRUMENTS = {kick:'Analog kick',snare:'Snare',hat:'Closed hat',openhat:'Open hat',clap:'Clap',rim:'Rimshot',tom:'Tom',bass:'Sub bass',keys:'Electric keys',lead:'Analog lead',pad:'Soft pad',sample:'Sampler'};
+export const INSTRUMENTS = {kick:'Analog kick',snare:'Snare',hat:'Closed hat',openhat:'Open hat',clap:'Clap',rim:'Rimshot',tom:'Tom',conga:'Conga',shaker:'Shaker',cowbell:'Cowbell',ride:'Ride cymbal',crash:'Crash cymbal',bass:'Sub bass',keys:'Electric keys',lead:'Analog lead',pad:'Soft pad',pluck:'Pluck',bell:'Bell',organ:'Organ',sample:'Sampler'};
+export const PERCUSSION = ['kick','snare','hat','openhat','clap','rim','tom','conga','shaker','cowbell','ride','crash'];
 export const PATTERNS = 'ABCDEFGH'.split('');
 export const SCALE_IDS=['major','minor','dorian','phrygian','lydian','mixolydian'];
 export const NOTE_NAMES=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
 export const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
 export const uid = ()=>globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
-export const melodic = t=>['bass','keys','lead','pad','sample'].includes(t.instrument);
+export const MELODIC = ['bass','keys','lead','pad','pluck','bell','organ','sample'];
+export const melodic = t=>MELODIC.includes(t.instrument);
 export const midiName = n=>NOTE_NAMES[n%12]+(Math.floor(n/12)-1);
 export const hz = n=>440*2**((n-69)/12);
 export const dbGain = d=>d<=-60?0:10**(d/20);

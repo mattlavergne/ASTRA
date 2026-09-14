@@ -26,28 +26,28 @@ const SAFE_MAJOR=[0,1,2,4,5],SAFE_MINOR=[0,2,3,4,6];
 
 export const VIBES=[
  {id:'lofi',name:'Lo-fi chill',blurb:'Dusty drums, warm keys, late-night calm.',bpm:84,swing:.2,mood:'chill',humanize:.06,bass:'walk',chords:'pad',melody:'sparse',seventh:.7,
-  drums:{kick:'x...--o---x.--.-',snare:'----x--.----x-..',hat:'x.o.x.o.x.o.x.o+',openhat:'------o-------.-',clap:'----.-------.---',perc:'--.---.--.----.-'},
+  drums:{kick:'x...--o---x.--.-',snare:'----x--.----x-..',hat:'x.o.x.o.x.o.x.o+',openhat:'------o-------.-',clap:'----.-------.---',perc:'--.---.--.----.-',crash:'x---------------',ride:'x--x-.x--x--x-x-',shaker:'--.-x---.-.-x---'},
   mix:{hat:{cutoff:7000,volume:-19},keys:{reverb:.34,cutoff:3600,volume:-14},bass:{cutoff:900,volume:-10},lead:{reverb:.3,delay:.24,volume:-21},kick:{drive:.2}}},
  {id:'boombap',name:'Boom bap',blurb:'Hard swung drums with a head-nod bounce.',bpm:90,swing:.24,mood:'soulful',humanize:.05,bass:'walk',chords:'stab',melody:'call',seventh:.6,
-  drums:{kick:'x--.--o---x--.--',snare:'----x-----.-x--.',hat:'x.o.x.o.x.o.x.o.',openhat:'----------o-----',clap:'----.-------.---',perc:'--.--.--.---.-.-'},
+  drums:{kick:'x--.--o---x--.--',snare:'----x-----.-x--.',hat:'x.o.x.o.x.o.x.o.',openhat:'----------o-----',clap:'----.-------.---',perc:'--.--.--.---.-.-',crash:'x---------------',ride:'x--x--x--x--x--x',shaker:'--x---x---x---x-'},
   mix:{snare:{drive:.3,volume:-10},hat:{cutoff:9000},keys:{reverb:.2,volume:-15},bass:{cutoff:1100}}},
  {id:'house',name:'House',blurb:'Four on the floor, made for moving.',bpm:124,swing:0,mood:'chill',humanize:.02,bass:'pump',chords:'stab',melody:'hook',seventh:.5,
-  drums:{kick:'x---x---x---x---',snare:'----x-------x--.',hat:'--x---x---x---x-',openhat:'--o---o---o---o.',clap:'----x-------x---',perc:'-.--.--.---.-.-o'},
+  drums:{kick:'x---x---x---x---',snare:'----x-------x--.',hat:'--x---x---x---x-',openhat:'--o---o---o---o.',clap:'----x-------x---',perc:'-.--.--.---.-.-o',crash:'x-------.-------',ride:'--x---x---x---x-',shaker:'x-x-x-x-x-x-x-x-'},
   mix:{kick:{drive:.3,volume:-5},clap:{reverb:.2},hat:{cutoff:12000},bass:{cutoff:1600,volume:-9},keys:{reverb:.22,volume:-15}}},
  {id:'trap',name:'Trap',blurb:'Booming 808s and rolling hi-hats.',bpm:142,swing:0,rolls:true,humanize:.02,mood:'dark',bass:'808',chords:'stab',melody:'hook',seventh:.2,
-  drums:{kick:'x-----o--+----.-',snare:'--------x------.',hat:'xoxoxoxoxoxoxoxo',openhat:'--------------.-',clap:'--------x-------',perc:'--.----.--.----.'},
+  drums:{kick:'x-----o--+----.-',snare:'--------x------.',hat:'xoxoxoxoxoxoxoxo',openhat:'--------------.-',clap:'--------x-------',perc:'--.----.--.----.',crash:'x---------------',ride:'--------.-------',shaker:'x-x-x-x-x-x-x-x-'},
   mix:{kick:{drive:.35,volume:-4},hat:{cutoff:13000,volume:-20},bass:{cutoff:700,volume:-7,decay:1.4,release:.5},lead:{reverb:.28,delay:.2}}},
  {id:'dnb',name:'Drum & bass',blurb:'Fast breakbeats over a deep sub.',bpm:174,swing:0,humanize:.03,mood:'dark',bass:'root',chords:'pad',melody:'sparse',seventh:.4,
-  drums:{kick:'x---------x-----',snare:'----x---.---x--.',hat:'x-o-x-o-x-o-x-oo',openhat:'--------------o-',clap:'----.-------.---',perc:'-.-.--.--.-.--.-'},
+  drums:{kick:'x---------x-----',snare:'----x---.---x--.',hat:'x-o-x-o-x-o-x-oo',openhat:'--------------o-',clap:'----.-------.---',perc:'-.-.--.--.-.--.-',crash:'x---------------',ride:'x-x-x-x-x-x-x-x-',shaker:'-.-.-.-.-.-.-.-.'},
   mix:{bass:{cutoff:800,volume:-8,decay:1.2},hat:{cutoff:12000,volume:-21},pad:{reverb:.4},lead:{delay:.26}}},
  {id:'afro',name:'Afro groove',blurb:'Rolling percussion and bright chords.',bpm:112,swing:.08,humanize:.05,mood:'soulful',bass:'pump',chords:'arp',melody:'call',seventh:.5,
-  drums:{kick:'x--o--x---x--o--',snare:'------.-----x--.',hat:'x.x.x.x.x.x.x.xo',openhat:'---.-------.----',clap:'----x-------x---',perc:'.-o-.-o.-o-.o-.o'},
+  drums:{kick:'x--o--x---x--o--',snare:'------.-----x--.',hat:'x.x.x.x.x.x.x.xo',openhat:'---.-------.----',clap:'----x-------x---',perc:'.-o-.-o.-o-.o-.o',crash:'x---------------',ride:'--x---x---x---x-',shaker:'x.x.x.x.x.x.x.x.'},
   mix:{perc:{reverb:.2},keys:{cutoff:6000,reverb:.26,volume:-14},bass:{cutoff:1400}}},
  {id:'pop',name:'Pop',blurb:'Clean, catchy and radio-ready.',bpm:104,swing:.06,humanize:.03,mood:'bright',bass:'pump',chords:'stab',melody:'hook',seventh:.25,
-  drums:{kick:'x-----.-x-----.-',snare:'----x-------x---',hat:'x.x.x.x.x.x.x.x.',openhat:'------o-------.-',clap:'----x-------x--.',perc:'--.----.--.---.-'},
+  drums:{kick:'x-----.-x-----.-',snare:'----x-------x---',hat:'x.x.x.x.x.x.x.x.',openhat:'------o-------.-',clap:'----x-------x--.',perc:'--.----.--.---.-',crash:'x---------------',ride:'--x---x---x---x-',shaker:'--.---.---.---.-'},
   mix:{clap:{reverb:.22},keys:{cutoff:7000,volume:-14},lead:{reverb:.24,delay:.18},bass:{cutoff:1500}}},
  {id:'ambient',name:'Ambient',blurb:'Slow, spacious and barely there.',bpm:72,swing:0,humanize:.08,mood:'dreamy',bass:'root',chords:'swell',melody:'sparse',seventh:.8,
-  drums:{kick:'x-----------.---',snare:'--------.-------',hat:'----.-------.--.',openhat:'--------------.-',clap:'----------------',perc:'--.-----.----.--'},
+  drums:{kick:'x-----------.---',snare:'--------.-------',hat:'----.-------.--.',openhat:'--------------.-',clap:'----------------',perc:'--.-----.----.--',crash:'x---------------',ride:'--------.-------',shaker:'----.-------.---'},
   mix:{kick:{volume:-13},hat:{volume:-25,reverb:.3},pad:{reverb:.6,cutoff:3200},keys:{reverb:.5,cutoff:3000},bass:{cutoff:600,volume:-13},lead:{reverb:.55,delay:.3,volume:-22}}}];
 export const vibeById=id=>VIBES.find(v=>v.id===id)||VIBES[0];
 
@@ -85,23 +85,42 @@ export const readMacro=(t,key)=>Math.round(MACROS[key].read(t));
 export const groupMacro=(tracks,key)=>tracks.length?Math.round(tracks.reduce((s,t)=>s+MACROS[key].read(t),0)/tracks.length):50;
 
 export const GROUPS=[
- {id:'drums',name:'Drums',blurb:'The heartbeat. Kick, snare, hats and percussion.',instruments:['kick','snare','hat','openhat','clap','rim','tom'],macros:['loudness','punch','brightness','space'],lane:'steps'},
+ {id:'drums',name:'Drums',blurb:'The heartbeat. Kick, snare, hats and percussion.',instruments:['kick','snare','hat','openhat','clap','rim','tom','conga','shaker','cowbell','ride','crash'],macros:['loudness','punch','brightness','space'],lane:'steps'},
  {id:'bass',name:'Bass',blurb:'The low end that ties the beat to the chords.',instruments:['bass'],macros:['loudness','brightness','shape','space'],lane:'notes'},
- {id:'chords',name:'Chords',blurb:'The harmony everything else sits on.',instruments:['keys','pad'],macros:['loudness','brightness','shape','space'],lane:'notes'},
- {id:'melody',name:'Melody',blurb:'The part people hum afterwards.',instruments:['lead'],macros:['loudness','brightness','shape','space'],lane:'notes'},
+ {id:'chords',name:'Chords',blurb:'The harmony everything else sits on.',instruments:['keys','pad','organ'],macros:['loudness','brightness','shape','space'],lane:'notes'},
+ {id:'melody',name:'Melody',blurb:'The part people hum afterwards.',instruments:['lead','pluck','bell'],macros:['loudness','brightness','shape','space'],lane:'notes'},
  {id:'extras',name:'Your samples',blurb:'Anything you imported yourself.',instruments:['sample'],macros:['loudness','brightness','space','shape'],lane:'steps'}];
+// Sounds beyond the eight a new session starts with. Easy mode offers these by name;
+// pro mode reaches the same voices from the instrument library.
+export const EXTRA_SOUNDS=[
+ {instrument:'ride',name:'Ride cymbal',blurb:'A steady metallic pulse instead of a hat.'},
+ {instrument:'crash',name:'Crash cymbal',blurb:'Marks the top of the loop.'},
+ {instrument:'shaker',name:'Shaker',blurb:'Keeps sixteenths moving underneath.'},
+ {instrument:'conga',name:'Conga',blurb:'Hand drum for rolling percussion.'},
+ {instrument:'cowbell',name:'Cowbell',blurb:'Cuts through everything. Use sparingly.'},
+ {instrument:'rim',name:'Rimshot',blurb:'A dry click in place of a snare.'},
+ {instrument:'tom',name:'Tom',blurb:'Low drum for fills.'},
+ {instrument:'pluck',name:'Pluck',blurb:'Short and stringy. Good for riffs.'},
+ {instrument:'bell',name:'Bell',blurb:'Bright and ringing, high above the chords.'},
+ {instrument:'organ',name:'Organ',blurb:'Held chords with body.'},
+ {instrument:'pad',name:'Soft pad',blurb:'A wash of chords behind everything.'}];
 export const groupOf=instrument=>GROUPS.find(g=>g.instruments.includes(instrument))?.id||'extras';
-export const ROLES={kick:'kick',snare:'snare',hat:'hat',openhat:'openhat',clap:'clap',rim:'perc',tom:'perc',bass:'bass',keys:'chords',pad:'chords',lead:'melody',sample:'perc'};
+export const ROLES={kick:'kick',snare:'snare',hat:'hat',openhat:'openhat',clap:'clap',rim:'perc',tom:'perc',conga:'perc',cowbell:'perc',shaker:'shaker',ride:'ride',crash:'crash',bass:'bass',keys:'chords',pad:'chords',organ:'chords',lead:'melody',pluck:'melody',bell:'melody',sample:'perc'};
 export const roleOf=instrument=>ROLES[instrument]||'perc';
 
 // Mixer starting points that keep a generated beat balanced before any knob is touched.
 const MIX={kick:{volume:-6,pan:0,reverb:0,cutoff:18000,attack:.002,decay:.35,drive:.1},snare:{volume:-11,pan:0,reverb:.14,cutoff:16000,drive:.1},
  hat:{volume:-19,pan:-.16,reverb:.06,cutoff:14000},openhat:{volume:-21,pan:.2,reverb:.14,cutoff:14000},clap:{volume:-14,pan:.08,reverb:.18,cutoff:15000},
  rim:{volume:-18,pan:-.22,reverb:.12,cutoff:15000},tom:{volume:-15,pan:.14,reverb:.16,cutoff:12000},
+ conga:{volume:-16,pan:-.24,reverb:.18,cutoff:13000},shaker:{volume:-22,pan:.26,reverb:.1,cutoff:16000},
+ cowbell:{volume:-21,pan:.3,reverb:.16,cutoff:14000},ride:{volume:-22,pan:.22,reverb:.2,cutoff:15000},crash:{volume:-20,pan:-.28,reverb:.3,cutoff:16000},
  bass:{volume:-9,pan:0,reverb:0,cutoff:1200,attack:.004,decay:.6,release:.2,drive:.1},
  keys:{volume:-15,pan:-.12,reverb:.28,cutoff:4200,attack:.01,decay:1,release:.5},
  pad:{volume:-18,pan:.1,reverb:.42,cutoff:3200,attack:.25,decay:1.6,release:1.1},
  lead:{volume:-20,pan:.16,reverb:.26,delay:.2,cutoff:9000,attack:.006,decay:.5,release:.3},
+ pluck:{volume:-17,pan:-.2,reverb:.24,delay:.14,cutoff:7000,attack:.003,decay:.3,release:.2},
+ bell:{volume:-21,pan:.24,reverb:.4,delay:.22,cutoff:11000,attack:.002,decay:.9,release:.7},
+ organ:{volume:-18,pan:-.08,reverb:.3,cutoff:5200,attack:.02,decay:1.2,release:.25},
  sample:{volume:-14,pan:0,reverb:.12,cutoff:16000}};
 export function applyVibeMix(t,vibe){Object.assign(t,MIX[t.instrument]||{},vibe?.mix?.[t.instrument]||{});return t;}
 
@@ -136,16 +155,19 @@ export function generateDrums(random,vibe,{steps=32,energy=.62}={}){
  const bars=Math.max(1,Math.round(steps/16)),out={};
  for(const [role,row] of Object.entries(vibe.drums||{})){
   const notes=[];
-  for(let bar=0;bar<bars;bar++)for(const s of rowSteps(random,row,clamp(energy+(bar===bars-1?.05:0),0,1))){
+  for(let bar=0;bar<bars;bar++){
+   // A crash marks the top of the loop, not the top of every bar inside it.
+   if(role==='crash'&&bar>0)continue;
+   for(const s of rowSteps(random,row,clamp(energy+(bar===bars-1?.05:0),0,1))){
    const step=bar*16+s;if(step>=steps)continue;
-   const accent=s%4===0?.14:s%2===0?.05:0,base={kick:.95,snare:.9,clap:.82,hat:.55,openhat:.62,perc:.6}[role]??.75;
+   const accent=s%4===0?.14:s%2===0?.05:0,base={kick:.95,snare:.9,clap:.82,hat:.55,openhat:.62,perc:.6,shaker:.5,ride:.52,crash:.78}[role]??.75;
    const n=event(step,60,clamp(base+accent-random()*.18,.15,1),role==='openhat'?2:1);
    if(vibe.humanize&&role!=='kick'&&random()<.6)n.offset=Math.round(random()*vibe.humanize*100)/100;
    if(vibe.rolls&&role==='hat'&&s%4===3&&random()<.15+.3*energy)n.ratchet=random()<.35?3:2;
    notes.push(n);
-  }
+  }}
   // A short fill at the end of the loop stops a repeating pattern sounding like a machine.
-  if(['snare','perc','tom'].includes(role)&&energy>.35&&random()<.3+energy*.45){
+  if(['snare','perc','shaker'].includes(role)&&energy>.35&&random()<.3+energy*.45){
    const start=steps-Math.round(2+random()*2);
    for(let s=start;s<steps;s++)if(random()<.65)notes.push(event(s,60,clamp(.45+ (s-start)*.12,.2,1),1));
   }
@@ -259,5 +281,5 @@ export function coachTip(project,{easyStep=0}={}){
  if(!has('bass'))return 'Add a bassline — it is what makes a loop feel finished.';
  if(!has('melody'))return 'Roll a melody. Every note in the grid is already in your key, so nothing can sound wrong.';
  if(project.arrangement.length<4)return 'Happy with the loop? Build a song to turn it into a full track.';
- return 'Sounding good. Tweak the feel sliders, then export your audio.';
+ return 'Sounding good. Play it yourself on the kit or the keys, tweak the feel sliders, then export your audio.';
 }
