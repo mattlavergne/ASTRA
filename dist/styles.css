@@ -102,6 +102,7 @@ body.easy-mode .library,body.easy-mode .main-workspace,body.easy-mode .inspector
 .stage-field{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .stage-field select{background:var(--raised);border:1px solid var(--line);border-radius:5px;padding:5px 7px;max-width:150px}
 .stage-octave{display:flex;gap:3px}
+.stage-level button{padding:4px 9px;font-size:12px}
 .stage-octave .icon{width:26px;height:26px;border:1px solid var(--line);background:var(--raised);font-size:14px}
 .stage-check{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
 .stage-check input{accent-color:var(--accent);width:15px;height:15px}
@@ -118,7 +119,22 @@ body.easy-mode .library,body.easy-mode .main-workspace,body.easy-mode .inspector
  radial-gradient(120% 80% at 50% 108%,rgba(213,247,130,.09),transparent 62%),
  linear-gradient(180deg,#171a16,#101210);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .kit::after{content:'';position:absolute;inset:auto 0 0;height:34%;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(0,0,0,.45))}
-.piece{position:absolute;padding:0;border:0;background:none;transition:transform .09s ease}
+.piece{position:absolute;padding:0;border:0;background:none;transition:transform .09s ease;z-index:2}
+.kit-rig{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.kit-rig .floor{fill:rgba(213,247,130,.045)}
+.kit-rig .rod{fill:#4a4f45}
+.kit-rig .rod-leg,.kit-rig .arm{fill:none;stroke:#454a40;stroke-width:3;stroke-linecap:round}
+.kit-rig .pedal{fill:#3c4138}
+.art{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.art .hoop{fill:none;stroke:rgba(60,64,52,.5);stroke-width:2.5}
+.art .hoop.thin{stroke:rgba(60,64,52,.22);stroke-width:1.2}
+.art .lug{fill:rgba(46,50,40,.65)}
+.art .sheen{fill:none;stroke:rgba(255,255,255,.4);stroke-width:2.5;stroke-linecap:round}
+.art .sheen.thin{stroke:rgba(255,255,255,.16)}
+.art .groove{fill:none;stroke:rgba(90,66,16,.32);stroke-width:1}
+.art .bell{fill:rgba(255,236,168,.4);stroke:rgba(120,90,26,.4)}
+.art .hole{fill:rgba(40,32,10,.6)}
+.art .inset{fill:none;stroke:rgba(255,255,255,.08);stroke-width:1.5}
 .piece-face{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,255,255,.14)}
 .piece-label{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;
  font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#0e120c;font-weight:600;text-shadow:0 1px 0 rgba(255,255,255,.25);pointer-events:none;z-index:1}
@@ -134,7 +150,13 @@ body.easy-mode .library,body.easy-mode .main-workspace,body.easy-mode .inspector
 .piece.bell .piece-face{clip-path:polygon(24% 0,76% 0,100% 100%,0 100%)}
 .piece.empty .piece-face{opacity:.28;filter:grayscale(.85)}
 .piece.empty .piece-label{color:#8f9885;text-shadow:none;font-weight:500}
+.piece:hover,.piece:focus-visible{background:none;color:inherit}
 .piece:hover{transform:translateY(-2px)}
+.piece-drop{position:absolute;z-index:3;width:22px;height:22px;margin:-11px 0 0 -11px;display:grid;place-items:center;border-radius:50%;
+ background:#1c201a;border:1px solid var(--line);color:var(--muted);font-size:12px;cursor:pointer;opacity:0;transition:opacity .12s ease}
+.piece-drop:hover,.piece-drop:focus-visible{opacity:1;border-color:#e08a7e;color:#f0b6ac}
+.piece:hover+.piece-drop{opacity:.8}
+.kit.playing .piece-drop{display:none}
 .piece.empty:hover .piece-face{opacity:.55}
 .piece.empty:hover .piece-label{color:var(--accent)}
 .piece:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
@@ -154,13 +176,16 @@ body.easy-mode .library,body.easy-mode .main-workspace,body.easy-mode .inspector
 .key-name{font:12px var(--mono);opacity:.75;pointer-events:none}
 .key kbd{font:12px var(--mono);background:rgba(0,0,0,.16);border-radius:3px;padding:1px 4px;pointer-events:none}
 .key.black kbd{background:rgba(255,255,255,.14)}
+.key:hover{background:none;color:inherit}
+.key.white:hover:not(.muted){background:linear-gradient(180deg,#fdffef,#e7f0cd)}
+.key.black:hover:not(.muted){background:linear-gradient(180deg,#414a33,#1e2416)}
 .key:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .key.hit,.key.lit{background:var(--accent);color:#12160e}
 .keys .stage-empty{position:static}
 
 /* The challenge: notes fall into the hit line, judged on the audio clock. */
 .challenge{position:relative;border:1px solid var(--line);border-radius:12px;background:#0d0f0c;overflow:hidden}
-#challenge-canvas{display:block;width:100%;height:230px}
+#challenge-canvas{display:block;width:100%;height:242px}
 .challenge-hud{display:flex;align-items:center;gap:14px;padding:8px 12px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--muted)}
 .challenge-hud strong{color:var(--text);font-weight:600}
 .challenge-hud #challenge-score{margin-left:auto;font:13px var(--mono);color:var(--accent)}
@@ -187,7 +212,9 @@ body.easy-mode .library,body.easy-mode .main-workspace,body.easy-mode .inspector
 .sound-add strong{font-size:13px}
 .sound-add small{color:var(--muted);font-size:11.5px;line-height:1.35}
 .sound-add:hover:not(:disabled){border-color:var(--accent)}
-.sound-add:disabled{opacity:.45;cursor:default}
+.sound-add.owned{border-style:solid;border-color:var(--line-soft);opacity:.72}
+.sound-add.owned:hover{opacity:1;border-color:#e08a7e}
+.sound-add.owned small{color:#c9a49c}
 .sound-add.import{border-style:dashed}
 .pads-label{margin:16px 0 8px}
 
@@ -195,8 +222,7 @@ body.easy-mode .library,body.easy-mode .main-workspace,body.easy-mode .inspector
  .kit{min-width:660px}
  .keys{min-width:600px}
  .piece-label{gap:3px}
- .piece-label kbd{display:none}
- #challenge-canvas{height:180px}
+ #challenge-canvas{height:196px}
  .stage-bar-end{margin-left:0;width:100%}
  .stage-hint{flex-basis:100%}
 }

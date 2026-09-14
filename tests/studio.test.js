@@ -216,9 +216,17 @@ test('the drum kit covers every percussion voice exactly once and no two pieces 
   const apart=Math.abs(a.x-b.x)>=(a.w+b.w)/2||Math.abs(a.y-b.y)>=(a.h+b.h)/2;
   assert.ok(apart,`${a.instrument} overlaps ${b.instrument}`);
  }
+ assert.equal(new Set(play.KIT.map(p=>p.key)).size,play.KIT.length,'every piece needs its own key');
+ assert.deepEqual(Object.keys(play.KIT_KEYS).sort(),play.KIT.map(p=>p.key.toLowerCase()).sort());
+ for(const [key,instrument] of Object.entries(play.KIT_KEYS))assert.equal(play.kitPiece(instrument).key,key.toUpperCase());
  const markup=play.kitMarkup(createProject().tracks);
  assert.equal([...markup.matchAll(/data-kit="/g)].length,5,'only the kit pieces that have a track are playable');
  assert.equal([...markup.matchAll(/data-kit-add="/g)].length,7,'the rest offer to add themselves');
+ assert.equal([...markup.matchAll(/<kbd>/g)].length,5,'each playable piece prints its key');
+ assert.equal([...markup.matchAll(/data-kit-remove=/g)].length,0,'removal is off unless asked for');
+ assert.equal([...play.kitMarkup(createProject().tracks,{removable:true}).matchAll(/data-kit-remove=/g)].length,5);
+ assert.ok(play.kitRig().includes('kit-rig')&&!/NaN|undefined/.test(play.kitRig()),'the drawn hardware has real coordinates');
+ for(const kind of ['drum','cymbal','plate','bell'])assert.ok(/^<svg class="art"/.test(play.pieceArt(kind)),kind);
  assert.ok(!play.kitMarkup([{...track('kick'),name:'<img src=x>',id:'a"b'}]).includes('<img'));
 });
 
@@ -301,7 +309,50 @@ test('the falling-note canvas draws only finite geometry inside its frame',()=>{
  assert.ok(calls.includes('clearRect')&&calls.includes('roundRect'));
  assert.equal(calls.filter(c=>c==='fill').length,2,'only the notes inside the lead window are drawn');
  assert.equal(calls.filter(c=>c==='fillText').length,lanes.length,'each lane is named under its hit line');
- assert.equal(play.laneLabel('Closed hat',40),'Clos…');
+ assert.equal(play.laneLabel('Closed hat',40),'Close…');
  assert.equal(play.laneLabel('Kick',200),'Kick');
  assert.doesNotThrow(()=>play.drawChallenge(ctx2d,{width:640,height:230,lanes:[],targets,elapsed:0}));
+});
+
+test('difficulty picks fewer parts, thins dense rows and widens the timing windows',()=>{
+ assert.deepEqual(play.DIFFICULTY.map(d=>d.id),['easy','medium','hard']);
+ assert.equal(play.difficultyById('nonsense').id,'easy','an unknown level falls back to the gentlest');
+ for(let i=1;i<play.DIFFICULTY.length;i++){const a=play.DIFFICULTY[i-1],b=play.DIFFICULTY[i];
+  assert.ok(b.lanes>a.lanes&&b.gap<a.gap&&b.tolerance<=a.tolerance,`${b.id} must be harder than ${a.id}`);}
+
+ // A full kit: the challenge must drop the least important parts first, then show what is left
+ // in the order the pieces sit on the stage.
+ const p=createProject('blank');
+ p.tracks=['shaker','kick','conga','snare','hat','cowbell','clap','ride'].map((instrument,i)=>{
+  const t=track(instrument,i);t.name=instrument;t.patterns.A=[event(0),event(4),event(8),event(12)];return t;});
+ assert.deepEqual(play.lanesFor(p.tracks,'A',{max:3}).map(l=>l.label),['snare','hat','kick']);
+ assert.deepEqual(play.lanesFor(p.tracks,'A',{max:5}).map(l=>l.label),['clap','snare','hat','kick','ride']);
+ assert.equal(play.lanesFor(p.tracks,'A',{max:7}).length,7);
+ for(const lane of play.lanesFor(p.tracks,'A',{max:7}))assert.equal(lane.key,play.kitPiece(lane.label).key,lane.label);
+
+ // Thinning keeps the first hit of a run so a sixteenth-note hat stays playable instead of vanishing.
+ const hat=p.tracks.find(t=>t.instrument==='hat');
+ hat.patterns.A=[0,2,4,6,8,10,12,14].map(step=>event(step));
+ const lane=play.lanesFor([hat],'A');
+ const steps=gap=>play.buildTargets(p,'A',lane,{loops:1,gap}).map(t=>t.step);
+ assert.deepEqual(steps(0),[0,2,4,6,8,10,12,14]);
+ assert.deepEqual(steps(2),[0,2,4,6,8,10,12,14]);
+ assert.deepEqual(steps(4),[0,4,8,12]);
+ assert.ok(steps(4).length&&steps(0).length>steps(4).length,'thinning never empties a lane that had notes');
+
+ // Easy never asks for two keys at once: the more important part keeps the beat.
+ const both=play.lanesFor(p.tracks,'A',{max:3});
+ const together=play.buildTargets(p,'A',both,{loops:1,gap:4});
+ assert.ok(together.length>new Set(together.map(t=>t.step)).size,'the parts do collide before solo is applied');
+ const alone=play.buildTargets(p,'A',both,{loops:1,gap:4,solo:true});
+ assert.equal(alone.length,new Set(alone.map(t=>t.step)).size,'solo leaves one target per step');
+ assert.ok(alone.every(t=>t.lane===both.find(l=>l.label==='kick').id),'and it keeps the most important part');
+
+ // A wider tolerance turns a hit that Hard would only call Okay into a Great.
+ const targets=[{lane:'a',time:1}];
+ assert.equal(new play.Scorer(targets).hit('a',1.12).id,'okay');
+ assert.equal(new play.Scorer(targets,{tolerance:1.45}).hit('a',1.12).id,'great');
+ assert.equal(new play.Scorer(targets).hit('a',1.2).id,'stray');
+ assert.equal(new play.Scorer(targets,{tolerance:1.45}).hit('a',1.2).id,'okay');
+ assert.ok(new play.Scorer(targets,{tolerance:1.45}).end>new play.Scorer(targets).end,'a gentler level waits longer before calling a miss');
 });
