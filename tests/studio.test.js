@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createProject,track,event,validateProject,History,locateStep,arrangementSteps,stepSeconds,stepTime,eventsAt,audibleTracks,PATTERNS,SCALE_IDS} from '../dist/model.js';
+import {createProject,track,event,validateProject,History,locateStep,arrangementSteps,stepSeconds,stepTime,eventsAt,audibleTracks,melodic,INSTRUMENTS,MELODIC,PERCUSSION,PATTERNS,SCALE_IDS} from '../dist/model.js';
 import {drumPCM,AudioGraph,Transport,renderAudio} from '../dist/audio.js';
 import {encodeWav,crc32,zip,packProject,unpackProject} from '../dist/files.js';
 import * as easy from '../dist/easy.js';
+import * as play from '../dist/play.js';
 
 const buffer=(channels,rate=48000)=>({numberOfChannels:channels.length,length:channels[0].length,sampleRate:rate,getChannelData:i=>Float32Array.from(channels[i])});
 
@@ -19,7 +20,7 @@ test('untrusted project input is bounded and identifiers cannot become markup',(
 
 test('undo and redo preserve chords, mixer settings, and arrangement and clear alternate futures',()=>{const p=createProject(),h=new History(3);const before=JSON.stringify(p);h.push(p);p.tracks[6].patterns.A.splice(0,3);p.tracks[0].volume=-30;p.arrangement.reverse();const after=JSON.stringify(p);const undone=h.undo(p);assert.equal(JSON.stringify(undone),before);assert.equal(JSON.stringify(h.redo(undone)),after);h.push(p);assert.equal(h.future.length,0);});
 
-test('all seven drum voices produce finite, bounded, non-silent PCM with a quiet release',()=>{for(const kind of ['kick','snare','hat','openhat','clap','rim','tom'])for(const rate of [44100,48000])for(const tune of [-24,0,24]){const pcm=drumPCM(kind,rate,tune);let peak=0,energy=0;for(const s of pcm){assert.ok(Number.isFinite(s));peak=Math.max(peak,Math.abs(s));energy+=s*s;}assert.ok(peak>.1&&peak<=1,kind);assert.ok(energy/pcm.length>.0001,kind);assert.ok(Math.abs(pcm.at(-1))<.001,kind);assert.equal(pcm[0],0);}});
+test('every percussion voice produces finite, bounded, non-silent PCM with a quiet release',()=>{assert.equal(PERCUSSION.length,12);for(const kind of PERCUSSION)for(const rate of [44100,48000])for(const tune of [-24,0,24]){const pcm=drumPCM(kind,rate,tune);let peak=0,energy=0;for(const s of pcm){assert.ok(Number.isFinite(s));peak=Math.max(peak,Math.abs(s));energy+=s*s;}assert.ok(peak>.1&&peak<=1,kind);assert.ok(energy/pcm.length>.0001,kind);assert.ok(Math.abs(pcm.at(-1))<.001,kind);assert.equal(pcm[0],0);}});
 
 test('stereo 24-bit WAV is correctly interleaved and preserves signed PCM',()=>{const r=encodeWav(buffer([[-1,0,1],[.5,-.5,0]]),{bits:24,dither:false}),v=new DataView(r.bytes.buffer);assert.equal(new TextDecoder().decode(r.bytes.slice(0,4)),'RIFF');assert.equal(v.getUint32(4,true),r.bytes.length-8);assert.equal(v.getUint16(22,true),2);assert.equal(v.getUint32(24,true),48000);assert.equal(v.getUint16(34,true),24);assert.equal(v.getUint32(40,true),18);function int24(at){let n=v.getUint8(at)|(v.getUint8(at+1)<<8)|(v.getUint8(at+2)<<16);if(n&0x800000)n-=0x1000000;return n;}assert.equal(int24(44),-8388608);assert.equal(int24(47),4194304);assert.equal(int24(50),0);assert.equal(int24(53),-4194304);assert.equal(int24(56),8388607);assert.equal(r.clipped,0);});
 
@@ -53,7 +54,8 @@ test('vibe drum templates are well formed and the scale table matches the projec
  for(const vibe of easy.VIBES){
   assert.ok(vibe.bpm>=40&&vibe.bpm<=240,vibe.id);
   assert.ok(vibe.swing>=0&&vibe.swing<=.65,vibe.id);
-  assert.deepEqual(Object.keys(vibe.drums),['kick','snare','hat','openhat','clap','perc'],vibe.id);
+  assert.deepEqual(Object.keys(vibe.drums),['kick','snare','hat','openhat','clap','perc','crash','ride','shaker'],vibe.id);
+  for(const instrument of PERCUSSION)assert.ok(vibe.drums[easy.roleOf(instrument)],`${vibe.id} has no row for ${instrument}`);
   for(const [role,row] of Object.entries(vibe.drums)){
    assert.equal(row.length,16,`${vibe.id} ${role} must cover one 16-step bar`);
    assert.match(row,/^[xo+.-]{16}$/,`${vibe.id} ${role}`);
@@ -169,4 +171,137 @@ test('easy-mode note grids only offer pitches that are in key, and song shapes s
   }
  }
  assert.equal(typeof easy.coachTip(createProject(),{easyStep:0}),'string');
+});
+
+test('every instrument in the library has a synthesis path, a mixer start point and a part generator',()=>{
+ const names=Object.keys(INSTRUMENTS);
+ assert.equal(names.length,20);
+ assert.deepEqual([...PERCUSSION,...MELODIC].sort(),[...names].sort());
+ for(const instrument of names){
+  assert.equal(melodic({instrument}),MELODIC.includes(instrument),instrument);
+  assert.ok(easy.roleOf(instrument),instrument);
+  const t=easy.applyVibeMix(track(instrument),easy.VIBES[0]);
+  assert.equal(validateProject({...createProject('blank'),tracks:[t]}).tracks[0].instrument,instrument);
+  assert.ok(t.volume>=-60&&t.volume<=6,instrument);
+  if(instrument==='sample')continue;
+  assert.ok(easy.GROUPS.some(g=>g.instruments.includes(instrument)),`${instrument} belongs to no easy-mode group`);
+ }
+});
+
+test('the new melodic voices are oscillator based, layered and distinct from one another',()=>{
+ const p=createProject('blank');
+ p.tracks=['pluck','bell','organ','keys'].map((instrument,i)=>({...track(instrument,i),decay:.4,release:.2}));
+ const ctx=new Context(),g=new AudioGraph(ctx,p);
+ const shapes=new Map();
+ for(const t of p.tracks){const before=ctx.starts.length;g.trigger(t,event(0,60),.1,.5);
+  const made=ctx.starts.slice(before);
+  assert.ok(made.length>=2,`${t.instrument} should layer oscillators`);
+  assert.ok(made.every(m=>m.kind==='oscillator'),t.instrument);
+  shapes.set(t.instrument,made.map(m=>m.source.frequency.value.toFixed(2)).join('/'));
+ }
+ assert.equal(new Set(shapes.values()).size,shapes.size,'each voice needs its own partials');
+ g.dispose();
+});
+
+test('the drum kit covers every percussion voice exactly once and no two pieces overlap',()=>{
+ assert.deepEqual(play.KIT.map(p=>p.instrument).sort(),[...PERCUSSION].sort());
+ for(const piece of play.KIT){
+  assert.ok(piece.x-piece.w/2>=0&&piece.x+piece.w/2<=play.STAGE_W,piece.instrument);
+  assert.ok(piece.y-piece.h/2>=0&&piece.y+piece.h/2<=play.STAGE_H,piece.instrument);
+  const r=play.box(piece);
+  for(const key of ['left','top','width','height'])assert.ok(r[key]>=0&&r[key]<=100,`${piece.instrument} ${key}`);
+ }
+ for(const a of play.KIT)for(const b of play.KIT){
+  if(a===b)continue;
+  const apart=Math.abs(a.x-b.x)>=(a.w+b.w)/2||Math.abs(a.y-b.y)>=(a.h+b.h)/2;
+  assert.ok(apart,`${a.instrument} overlaps ${b.instrument}`);
+ }
+ const markup=play.kitMarkup(createProject().tracks);
+ assert.equal([...markup.matchAll(/data-kit="/g)].length,5,'only the kit pieces that have a track are playable');
+ assert.equal([...markup.matchAll(/data-kit-add="/g)].length,7,'the rest offer to add themselves');
+ assert.ok(!play.kitMarkup([{...track('kick'),name:'<img src=x>',id:'a"b'}]).includes('<img'));
+});
+
+test('the keyboard lays out two real octaves and marks the notes that are in key',()=>{
+ const pitches=new Set(easy.SCALES.minor.map(s=>(s+9)%12));
+ const keys=play.keyboardKeys(48,2,pitches);
+ assert.equal(keys.length,24);
+ const whites=keys.filter(k=>k.type==='white'),blacks=keys.filter(k=>k.type==='black');
+ assert.equal(whites.length,14);assert.equal(blacks.length,10);
+ assert.deepEqual(whites.map(k=>k.note),[48,50,52,53,55,57,59,60,62,64,65,67,69,71]);
+ assert.deepEqual(blacks.map(k=>k.note),[49,51,54,56,58,61,63,66,68,70]);
+ for(let i=1;i<whites.length;i++)assert.ok(whites[i].x>whites[i-1].x);
+ assert.ok(Math.abs(whites.at(-1).x+whites.at(-1).w-100)<1e-9,'white keys fill the keyboard');
+ for(const k of blacks)assert.ok(k.x>0&&k.x+k.w<100,'black keys sit inside the span');
+ for(const k of keys)assert.equal(k.inKey,pitches.has(k.note%12),k.note);
+ const guarded=play.keyboardMarkup(keys,{stayInKey:true});
+ assert.equal([...guarded.matchAll(/aria-disabled="true"/g)].length,keys.filter(k=>!k.inKey).length);
+ assert.ok(!play.keyboardMarkup(keys,{stayInKey:false}).includes('disabled'));
+});
+
+test('challenge targets follow the pattern, swing and every repeat of the loop',()=>{
+ const p=createProject('blank');p.bpm=120;p.swing=.2;p.patternLengths.A=16;
+ const drum=p.tracks[0],keysTrack=p.tracks[6];
+ drum.patterns.A=[event(0),event(5),event(8)];drum.patterns.A[1].offset=.25;
+ keysTrack.patterns.A=[event(2,60),event(4,64),event(6,60)];
+ const lanes=play.lanesFor([drum],'A');
+ assert.deepEqual(lanes.map(l=>l.id),[drum.id]);
+ assert.deepEqual(play.lanesFor([p.tracks[5]],'A'),[],'a silent track is not a lane');
+ const targets=play.buildTargets(p,'A',lanes,{loops:3});
+ assert.equal(targets.length,9);
+ const loop=16*stepSeconds(p);
+ assert.equal(targets[0].time,stepTime(0,p));
+ assert.equal(targets[1].time,stepTime(5,p)+.25*stepSeconds(p));
+ assert.equal(targets[3].time,stepTime(0,p)+loop);
+ assert.equal(targets.at(-1).time,stepTime(8,p)+2*loop);
+ for(let i=1;i<targets.length;i++)assert.ok(targets[i].time>=targets[i-1].time);
+ const pitch=play.pitchLanes(keysTrack,'A');
+ assert.deepEqual(pitch.map(l=>l.note),[60,64]);
+ const melody=play.buildTargets(p,'A',pitch,{loops:1});
+ assert.deepEqual(melody.map(t=>t.lane),[`${keysTrack.id}:60`,`${keysTrack.id}:64`,`${keysTrack.id}:60`]);
+});
+
+test('timing windows, combos, misses and ranks are scored from the audio clock',()=>{
+ const targets=[{lane:'a',time:1},{lane:'a',time:2},{lane:'b',time:2}];
+ const s=new play.Scorer(targets);
+ assert.equal(s.max,300);
+ assert.equal(s.hit('a',1.01).id,'perfect');
+ assert.equal(s.hit('b',2-play.JUDGE[1].window+1e-9).id,'great');
+ assert.equal(s.combo,2);
+ assert.equal(s.hit('a',9).id,'stray','a hit with no target in range breaks the run');
+ assert.equal(s.combo,0);
+ assert.equal(s.hit('a',2+play.MISS_WINDOW-1e-9).id,'okay');
+ assert.equal(new play.Scorer([{lane:'a',time:1}]).hit('a',1+play.MISS_WINDOW+.01).id,'stray','outside the last window nothing can be claimed');
+ assert.equal(s.remaining,0);
+ assert.equal(s.score,205);
+ assert.equal(s.summary.combo,2);
+ assert.equal(s.summary.strays,1);
+ assert.ok(Math.abs(s.accuracy-205/300)<1e-12);
+ const missed=new play.Scorer(targets);
+ missed.sweep(1+play.MISS_WINDOW+1e-6);
+ assert.equal(missed.counts.miss,1);
+ missed.sweep(50);
+ assert.equal(missed.counts.miss,3);
+ assert.equal(missed.accuracy,0);
+ assert.equal(missed.rank,'D');
+ assert.ok(missed.done(missed.end+.001)&&!missed.done(missed.end-.001));
+ const perfect=new play.Scorer(targets);
+ for(const t of targets)perfect.hit(t.lane,t.time);
+ assert.equal(perfect.rank,'S');
+ assert.deepEqual([.95,.86,.7,.5,0].map(play.rankFor),['S','A','B','C','D']);
+ assert.equal(play.verdictFor(play.MISS_WINDOW+.001),null);
+});
+
+test('the falling-note canvas draws only finite geometry inside its frame',()=>{
+ const calls=[];const record=name=>(...args)=>{for(const a of args)if(typeof a==='number')assert.ok(Number.isFinite(a),`${name} got ${a}`);calls.push(name);};
+ const ctx2d={clearRect:record('clearRect'),fillRect:record('fillRect'),rect:record('rect'),roundRect:record('roundRect'),beginPath:record('beginPath'),fill:record('fill'),fillText:record('fillText'),globalAlpha:1,fillStyle:'',font:'',textAlign:'',textBaseline:''};
+ const lanes=[{id:'a',color:'#fff'},{id:'b',color:'#0f0'}];
+ const targets=[{lane:'a',time:.6,velocity:.9,verdict:null},{lane:'b',time:1,velocity:.4,verdict:'miss'},{lane:'a',time:9,velocity:.5,verdict:null}];
+ play.drawChallenge(ctx2d,{width:640,height:230,lanes,targets,elapsed:.5,now:1,flashes:new Map([['a',1]])});
+ assert.ok(calls.includes('clearRect')&&calls.includes('roundRect'));
+ assert.equal(calls.filter(c=>c==='fill').length,2,'only the notes inside the lead window are drawn');
+ assert.equal(calls.filter(c=>c==='fillText').length,lanes.length,'each lane is named under its hit line');
+ assert.equal(play.laneLabel('Closed hat',40),'Clos…');
+ assert.equal(play.laneLabel('Kick',200),'Kick');
+ assert.doesNotThrow(()=>play.drawChallenge(ctx2d,{width:640,height:230,lanes:[],targets,elapsed:0}));
 });
