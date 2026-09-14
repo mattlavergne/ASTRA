@@ -26,8 +26,8 @@ Easy mode is for making music without knowing music theory. It writes notes into
 2. **Set the feeling.** Key is the note everything comes home to; mood picks the scale behind it — bright (major), dreamy (lydian), warm (mixolydian), chill (dorian), sad (minor), or dark (phrygian). Changing either one afterwards *moves the music you already wrote* into the new key instead of discarding it: every note keeps its position in the scale.
 3. **Shape your parts.** Drums, bass, chords, and melody each get one card. "How busy" rewrites that part with more or fewer notes. "New idea" rerolls it. The other sliders are the sound itself — loudness, brightness, punch, space, shape — each one driving several real mixer parameters at once (brightness is filter cutoff plus high shelf; punch is attack, drive, and decay; space is reverb and delay sends).
 4. **Edit the notes.** Drums are one bar of squares, left to right, with the beats numbered. Bass, chords, and melody use a grid whose rows are only the notes in your key, so every square you can click is in tune. Long notes show their tail, and adding a note plays it.
-5. **Play it yourself.** A drum kit and a piano keyboard sit in the page. Tap a drum, or press a key, and it sounds. Faded kit pieces are sounds you do not have yet — tapping one adds it and writes it a part. With "Stay in key" on, the piano only lets you press notes that belong to your song. Turn on Record to write what you play into the section, quantized to the nearest 1/16.
-6. **Take the challenge.** Press *Start challenge* and the notes already in the section fall down lanes above the kit. Hit them in time. Perfect / Great / Okay / miss are judged on the audio clock, runs build a combo, and the result is a percentage and a rank from S down to D. "Mute the part I play" drops the recorded part for the run so what you hear is what you played.
+5. **Play it yourself.** A drum kit and a piano keyboard sit in the page. Every kit piece has a letter printed on it — tap the piece or press the letter. Faded pieces are sounds you do not have yet: tapping one adds it and writes it a part, and hovering a piece you own gives you a ✕ to take it back out. With "Stay in key" on, the piano only lets you press notes that belong to your song. Turn on Record to write what you play into the section, quantized to the nearest 1/16.
+6. **Take the challenge.** Press *Start challenge* and the notes already in the section fall down lanes, with the key to press under each lane. Start on **Easy**: three parts, on the beat, never two keys at the same moment, and generous timing. Perfect / Great / Okay / miss are judged on the audio clock, runs build a combo, and the result is a percentage and a rank from S down to D. "Mute the part I play" drops the recorded part for the run so what you hear is what you played.
 7. **Build a song.** Sections are named — Main groove, Lift, Breakdown, Big drop — rather than lettered A–D. Pick a song shape, then reorder, add, or remove sections, and switch playback between the loop and the whole song.
 8. **Finish.** Export audio and Save project work identically in both modes.
 
@@ -39,11 +39,21 @@ The mode toggle lives in the header and is remembered on the device. Easy mode i
 
 The play stage is the same in both modes — easy mode gives it a card of its own, pro mode puts it under **Perform** — and it edits the same project as everything else.
 
-- **Drum kit.** Twelve pieces laid out as a kit: crash, hi-hat and open hat, ride, cowbell, clap, rim, tom, snare, kick, conga, and shaker. A piece backed by a track plays that track. A piece with no track behind it is faded and adding it is one tap: the sound joins the session with a part already written for the sections you are using, rather than arriving silent.
+- **Drum kit.** Twelve pieces laid out as a kit: crash, hi-hat and open hat, ride, cowbell, clap, rim, tom, snare, kick, conga, and shaker. The stands, legs, hi-hat pedal and floor are drawn from the same coordinates the pieces use, so the hardware stays in step with the layout. A piece backed by a track plays that track. A piece with no track behind it is faded and adding it is one tap: the sound joins the session with a part already written for the sections you are using, rather than arriving silent. Hovering or focusing a piece you own reveals a ✕ that removes it, as does the "Add a sound" list, and either is undoable.
+- **Kit keys.** `Q W E R T` across the cymbals and cowbell, `A S D F G H J` across the drums and pads — the two keyboard rows in the same left-to-right order as the two rows of the kit, with each letter printed on the piece it plays. These letters apply only while the kit is on screen; everywhere else `A`–`K` keeps its usual meaning of tracks one to eight.
 - **Keyboard.** Two octaves of real piano keys for the selected bass, chords, or melody sound, movable up and down by octave. Keys that belong to your key are tinted; with "Stay in key" on, the rest are unavailable, which is the same promise the easy-mode note grid makes. The existing `Q 2 W 3 E T 6 Y 7 U 8 I O` row plays the same notes from the computer keyboard.
 - **Recording.** The stage's Record button is the transport's record arm. With it on, what you play is written into the selected section, snapped to the nearest 1/16 — the same path the pads and MIDI use, so it is undoable and saved like any other edit.
-- **The challenge.** Lanes are ordered to match the kit, one per drum, or one per pitch when you are on the keyboard. It runs for four passes of the current loop in pattern playback, starting at the next loop boundary. A hit resolves the nearest unjudged target in its lane inside a 160 ms window: Perfect under 55 ms, Great under 100 ms, Okay to the edge. Hits with nothing in range are counted as off-beat and break the run. Judging uses the audio clock minus the device's reported output latency, so it scores when a sound was heard rather than which animation frame the click landed in. The challenge never writes notes.
-- **Scores.** The result is a percentage of the maximum score, a longest run, and a rank: S at 95%, A at 85%, B at 70%, C at 50%, D below. Your best percentage per section is remembered on the device.
+- **The challenge.** Lanes are ordered to match the kit, one per drum, or one per pitch when you are on the keyboard, and each lane shows the key to press beneath it. It runs for four passes of the current loop in pattern playback, starting at the next loop boundary. A hit resolves the nearest unjudged target in its lane: Perfect under 55 ms, Great under 100 ms, Okay to 160 ms. Hits with nothing in range are counted as off-beat and break the run. Judging uses the audio clock minus the device's reported output latency, so it scores when a sound was heard rather than which animation frame the click landed in. The challenge never writes notes, and stopping it stops the beat it started — if you were already playing, playback carries on.
+- **Difficulty.** Three levels move three things at once.
+
+  | Level | Parts | Notes kept | Timing windows |
+  | --- | --- | --- | --- |
+  | Easy | 3 | On the beat, and never two parts at the same moment | 45% wider |
+  | Medium | 5 | Eighth notes and wider | 15% wider |
+  | Hard | 7 | Every note in the section | As listed above |
+
+  When the challenge cannot show every part it keeps the ones a drummer would miss first — kick, snare, hi-hat, then clap and the rest. Thinning keeps the first note of a run rather than dropping a lane, so a sixteenth-note hi-hat becomes something you can hit instead of disappearing. Easy is the default.
+- **Scores.** The result is a percentage of the maximum score, a longest run, and a rank: S at 95%, A at 85%, B at 70%, C at 50%, D below. Your best percentage is remembered on the device per section and per level, so an Easy run never overwrites a Hard one.
 
 ## Production workflow
 
@@ -99,6 +109,7 @@ The safety compressor is a native dynamics compressor set to -2 dB threshold, 20
 | Ctrl/Cmd S | Download project, outside form inputs |
 | Ctrl/Cmd Z | Undo |
 | Ctrl/Cmd Shift Z | Redo |
+| Q W E R T / A S D F G H J | The drum kit, while the kit is on screen |
 | Enter/Space on a kit piece or a piano key | Play it, or add that sound if the piece is empty |
 | Enter/Space on a grid cell | Toggle the hit |
 | Enter on an arrangement section | Edit section, including keyboard reordering |
@@ -120,8 +131,9 @@ This is a self-contained beat studio and a substantial first production workflow
 - Live MIDI playback supports note-on/off and velocity. Pitch bend, sustain pedal, MIDI clock, and controller mapping are not implemented.
 - Browser background throttling and device latency can affect performance. Keep the tab active while recording. The scheduling worker has a main-thread timer fallback when worker creation is unavailable.
 - Stereo rendering, browser audio decoding, MIDI permissions, touch interactions, and visual layout still need real-browser/device verification. They were not exercised by the automated Node checks.
-- The challenge plays the current loop in pattern playback. It has no song-length run, no difficulty setting, no note-accuracy scoring on the keyboard beyond hitting the right pitch lane, and no leaderboard or sharing: the best percentage is a number in your own browser.
+- The challenge plays the current loop in pattern playback. It has no song-length run, no note-accuracy scoring on the keyboard beyond hitting the right pitch lane, and no leaderboard or sharing: the best percentage is a number in your own browser.
 - The stage shows one kit piece per percussion voice and one keyboard for one melodic track at a time. A second snare or a second keys track is reached from the sequencer, the pads, or Pro mode.
+- The challenge shows at most seven lanes. On a full kit the quieter parts are left out by design rather than scrolled to.
 - Judging subtracts the browser's reported output latency. Browsers that do not report it, and input latency from the mouse, touch digitizer, or keyboard, are not compensated, so absolute timing scores are not comparable between devices.
 - Easy mode edits the currently selected section, and its note grid edits the first track of a part — a second keys or pad track is still reached from Pro mode. It has no pad performance, MIDI recording, per-note velocity, or probability editing; those stay in Pro mode.
 - "How busy" is a setting for the generator, not stored project data, so it returns to its default when the page reloads. The notes it wrote are saved normally.
@@ -133,7 +145,7 @@ This is a self-contained beat studio and a substantial first production workflow
 | `dist/index.html`, `dist/styles.css` | Studio workspace and responsive theme |
 | `dist/app.js` | Editors, transport UI, mixer, performance, easy-mode workspace, file workflows |
 | `dist/easy.js` | Beginner music engine: scales, chord movements, part generators, plain-language macros |
-| `dist/play.js` | Kit layout, keyboard layout, challenge targets, timing judgement, falling-note canvas |
+| `dist/play.js` | Kit layout and drawn hardware, keyboard layout, difficulty, challenge targets, timing judgement, falling-note canvas |
 | `dist/model.js` | Validated project model, musical timing, event selection, history |
 | `dist/audio.js` | Web Audio graph, synthesis, scheduling, offline rendering |
 | `dist/clock.js` | Worker heartbeat for the look-ahead scheduler |
@@ -152,11 +164,11 @@ node scripts/check-assets.js
 node --test tests/studio.test.js
 ```
 
-Twenty-eight tests check project schema round-trips and malicious input, arrangement boundaries, tempo/swing timing, mute/solo/probability/retrigger selection, undo/redo, actual synthesized PCM for all twelve percussion voices, 16/24-bit WAV handling, ZIP integrity, embedded project assets, graph routing, sampler trimming, scheduler stall recovery, and offline render parameters.
+Twenty-nine tests check project schema round-trips and malicious input, arrangement boundaries, tempo/swing timing, mute/solo/probability/retrigger selection, undo/redo, actual synthesized PCM for all twelve percussion voices, 16/24-bit WAV handling, ZIP integrity, embedded project assets, graph routing, sampler trimming, scheduler stall recovery, and offline render parameters.
 
 Two cover the widened instrument set: every one of the twenty instruments has a synthesis path, a mixer starting point, an easy-mode group, and survives the project schema; and the melodic voices each layer their own oscillator partials rather than sharing one.
 
-Five cover the play stage: the kit holds every percussion voice exactly once with no two pieces overlapping and escapes track names into its markup; the keyboard lays out two real octaves with the black keys inside the span and marks exactly the pitches in the chosen key; challenge targets follow the pattern's swing, microtiming, and every repeat of the loop; the timing windows, combo, stray, miss, accuracy, and rank rules hold at their boundaries; and the falling-note canvas emits only finite geometry and draws only the notes inside its lead window.
+Six cover the play stage: the kit holds every percussion voice exactly once with no two pieces overlapping, gives each a unique key, escapes track names into its markup, and draws its hardware from real coordinates; the keyboard lays out two real octaves with the black keys inside the span and marks exactly the pitches in the chosen key; challenge targets follow the pattern's swing, microtiming, and every repeat of the loop; the timing windows, combo, stray, miss, accuracy, and rank rules hold at their boundaries; the difficulty levels are ordered so each is harder than the last, drop the least important parts first, thin a dense row without emptying it, leave one target per step on Easy, and widen the windows exactly as far as their tolerance says; and the falling-note canvas emits only finite geometry and draws only the notes inside its lead window.
 
 Six of them cover easy mode: drum templates are well formed and the scale tables agree with the project schema; generated parts are in key, inside the loop, and pass validation unchanged; a seed reproduces its music exactly while new seeds do not; the plain-language macros map onto in-range mixer values and read back where they were set; a key or mood change never leaves a note outside the new key and round-trips notes that were already in it; and the note grids and song shapes stay inside the project's limits.
 
